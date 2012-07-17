@@ -25,4 +25,15 @@
     </description>
     <final>true</final>
   </property>
+
+  <property>
+	  <name>fs.fake2.impl</name>
+	  <value>cn.ict.magicube.spikes.FakeFileSystem2</value>
+  </property>
+
+  <property>
+	  <name>fs.fake.impl</name>
+	  <value>cn.ict.magicube.spikes.FakeFileSystem</value>
+  </property>
+
 </configuration>
