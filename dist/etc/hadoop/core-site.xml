@@ -27,6 +27,16 @@
   </property>
 
   <property>
+	  <name>mapreduce.framework.name</name>
+	  <value>yarn</value>
+  </property>
+
+  <property>
+	  <name>yarn.nodemanager.log-dirs</name>
+	  <value>/tmp/log</value>
+  </property>
+
+  <property>
 	  <name>fs.fake2.impl</name>
 	  <value>cn.ict.magicube.spikes.FakeFileSystem2</value>
   </property>
