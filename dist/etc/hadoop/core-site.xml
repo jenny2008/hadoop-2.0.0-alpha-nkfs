@@ -48,4 +48,19 @@
 	  <value>cn.ict.magicube.spikes.FakeFileSystem</value>
   </property>
 
+  <property>
+	  <name>fs.nkfs.impl</name>
+	  <value>cn.ict.magicube.fs.NKFileSystem</value>
+  </property>
+
+  <property>
+	  <name>nkfs.basedir</name>
+	  <value>/tmp/nkfs_base</value>
+  </property>
+
+  <property>
+	  <name>nkfs.baseFSURI</name>
+	  <value>file:///</value>
+  </property>
+
 </configuration>
