@@ -56,6 +56,8 @@ public class FakeFileSystem2 extends FileSystem {
 			abs = abs.substring(i);
 			Path absp = new Path(abs);
 			assert(absp.getName() != "");
+			LOG.info("creating LocalMap from " + p.toString() + " " +
+					"absp = " + absp.toString());
 		}
 		
 		private String abs;
@@ -254,11 +256,13 @@ public class FakeFileSystem2 extends FileSystem {
 	/* untested */
 	public boolean mkdirs(Path f, FsPermission permission) throws IOException {
 		if(f == null) {
-			throw new IllegalArgumentException("mkdirs path arg is null");
+			IllegalArgumentException e = new IllegalArgumentException("mkdirs path arg is null");
 		}
+		LOG.info("in mkdirs, path = " + f.toString());
 		LocalMap map = new LocalMap(f);
-		fs.mkdirs(map.shadowPath, permission);
-		for (Path p : map.dataPath) {
+		LOG.info("map.shadowPath = " + map.getShadowPath());
+		fs.mkdirs(map.getShadowPath(), permission);
+		for (Path p : map.getDataPath()) {
 			fs.mkdirs(p, permission);
 		}
 		return true;
@@ -284,22 +288,24 @@ public class FakeFileSystem2 extends FileSystem {
 		
 		return results;
 	}
-
+	
+	@Override
+	public FSDataInputStream open(Path f, int bufferSize) throws IOException {
+		LOG.info("open " + f.toString());
+		return null;
+	}
 	
 	////////////////////////////////
 	// FileSystem
 	////////////////////////////////
-	@Override
-	public FSDataInputStream open(Path f, int bufferSize) throws IOException {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	
 
 	@Override
 	public FSDataOutputStream create(Path f, FsPermission permission,
 			boolean overwrite, int bufferSize, short replication,
 			long blockSize, Progressable progress) throws IOException {
 		// TODO Auto-generated method stub
+		LOG.info("create " + f.toString());
 		return null;
 	}
 
@@ -321,12 +327,6 @@ public class FakeFileSystem2 extends FileSystem {
 		// TODO Auto-generated method stub
 		return false;
 	}
-
-
-
-
-
-	
 
 	/////////////////////////////////
 	//
