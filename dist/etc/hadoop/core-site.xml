@@ -31,10 +31,12 @@
 	  <value>yarn</value>
   </property>
 
+  <!--
   <property>
 	  <name>yarn.nodemanager.log-dirs</name>
 	  <value>/tmp/log</value>
   </property>
+  -->
 
   <property>
 	  <name>fs.fake2.impl</name>
