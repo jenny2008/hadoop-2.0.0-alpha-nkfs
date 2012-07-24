@@ -60,7 +60,7 @@
 
   <property>
 	  <name>nkfs.baseFSURI</name>
-	  <value>file:///</value>
+	  <value>hdfs:///</value>
   </property>
 
 </configuration>

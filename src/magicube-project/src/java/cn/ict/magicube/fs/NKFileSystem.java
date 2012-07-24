@@ -165,8 +165,16 @@ public class NKFileSystem extends FileSystem {
 	public Path convertFromBaseShadow(Path p) {
 		return convertFromBasePath(getBaseShadowDir(), p);
 	}
+	
 	////////////////
-	// trivial stuff
+	// NKFS specific stuffs
+	////////////////
+	FileSystem getBaseFileSystem() {
+		return baseFS;
+	}
+	
+	////////////////
+	// trivial stuffs
 	////////////////
 	
 	@Override
