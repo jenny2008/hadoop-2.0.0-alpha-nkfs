@@ -5,6 +5,7 @@
 	<classpathentry kind="src" path="src/magicube-project/src/java"/>
 	<classpathentry excluding="org/apache/hadoop/record/compiler/ant/" kind="src" path="src/hadoop-common-project/hadoop-common/src/main/java"/>
 	<classpathentry kind="src" path="src/hadoop-hdfs-project/hadoop-hdfs/src/main/java"/>
+	<classpathentry kind="src" path="src/hadoop-mapreduce-project/hadoop-mapreduce-client/hadoop-mapreduce-client-core/src/main/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/sun-jdk-1.6.0.31"/>
 	<classpathentry kind="lib" path="dist/share/hadoop/common/lib/activation-1.1.jar"/>
 	<classpathentry kind="lib" path="dist/share/hadoop/common/lib/asm-3.2.jar"/>

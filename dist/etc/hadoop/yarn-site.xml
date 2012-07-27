@@ -16,7 +16,7 @@
   <property>
     <description>The address of the applications manager interface in the RM.</description>
     <name>yarn.resourcemanager.address</name>
-    <value>10.5.0.40:8032</value>
+    <value>wn:8032</value>
   </property>
 
 </configuration>
