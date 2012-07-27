@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.net.URI;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern; 
@@ -24,6 +25,7 @@ import org.apache.hadoop.fs.PositionedReadable;
 import org.apache.hadoop.fs.Seekable;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
+import org.apache.hadoop.fs.shell.PathExceptions.PathIOException;
 import org.apache.hadoop.fs.GlobFilter;
 import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.util.Progressable;
@@ -98,7 +100,6 @@ public class NKFileSystem extends FileSystem {
 			_abs = strpath.substring(i);
 		}
 		
-		private String _digest = null;
 		/*
 		private String getDigest() {
 			if (_digest != null)
@@ -684,9 +685,18 @@ public class NKFileSystem extends FileSystem {
 	}
 
 	
-	private class NKFSDataInputStream extends InputStream implements Seekable, PositionedReadable {
-		class PartInfo implements Comparable {
+	private class NKFSInputStream extends InputStream implements Seekable, PositionedReadable {
+		
+		private class PartInfo implements Comparable<PartInfo> {
+			class PartInfoComparator implements Comparator<PartInfo> {
+				@Override
+				public int compare(PartInfo o1, PartInfo o2) {
+					return o1.compareTo(o2);
+				}
+			}
+			
 			final Path _partDir;
+			final Path _partOriginFile;
 			final Path _topFilePath;
 			final long _offset;
 			final long _length;
@@ -705,6 +715,14 @@ public class NKFileSystem extends FileSystem {
 				_length = Long.parseLong(m.group(2));
 				_partDir = convertToDir(partDir);
 				_topFilePath =  originFilePath;
+				_partOriginFile = new Path(_partDir.toUri().resolve("origin"));
+			}
+			
+			/* create a object for search only */
+			PartInfo(long offset) {
+				_offset = offset;
+				_partDir = _partOriginFile = _topFilePath = null;
+				_length = -1;
 			}
 			
 			@Override
@@ -712,29 +730,23 @@ public class NKFileSystem extends FileSystem {
 				return String.format("%s (%s): %d -- +%d",
 						_topFilePath, _partDir, _offset, _length);
 			}
-			
-			public Path getPartOriginFile() {
-				return new Path(_partDir.toUri().resolve("origin"));
-			}
 
 			@Override
-			public int compareTo(Object o) {
-				if (!(o instanceof PartInfo))
-					return -1;
+			public int compareTo(PartInfo o) {
 				PartInfo other = (PartInfo)o;
-				long v = (other._offset - other._offset);
-				if (v == 0)
+				if (other._offset - this._offset == 0)
 					return 0;
-				if (v > 0)
-					return 1;
-				return -1;
+				if (other._offset - this._offset > 0)
+					return -1;
+				return 1;
 			}
 		};
 		
-		PartInfo[] parts;
-		Path topPath;
-		long curPos;
-		InputStream curIn;
+		private PartInfo[] parts;
+		private Path topPath;
+		private long curPos;
+		private int curPartIdx;
+		private FSDataInputStream curIn;
 		
 		private Path getCurPartOriginFile() {
 			PartInfo part = null;
@@ -746,11 +758,11 @@ public class NKFileSystem extends FileSystem {
 			}
 			if (part == null)
 				return null;
-			return part.getPartOriginFile();
+			return part._partOriginFile;
 		}
 		
-		private NKFSDataInputStream(Path topPath, FileStatus[] partsDirs, int bufferSize) throws IOException {
-			ArrayList<PartInfo> l = new ArrayList<PartInfo>();
+		private NKFSInputStream(Path topPath, FileStatus[] partsDirs, int bufferSize) throws IOException {
+			List<PartInfo> l = new LinkedList<PartInfo>();
 			for (FileStatus partDirStat : partsDirs) {
 				l.add(new PartInfo(topPath, partDirStat.getPath()));
 			}
@@ -758,47 +770,79 @@ public class NKFileSystem extends FileSystem {
 			java.util.Collections.sort(l);
 			l.toArray(parts);
 			curPos = 0;
-			curIn = baseFS.open(getCurPartOriginFile(), bufferSize);
-			throw new IOException("working here, check result of sort!!!");
+			curPartIdx = 0;
+			curIn = baseFS.open(parts[curPartIdx]._partOriginFile, bufferSize);
 		}
+		
+		@Override
+	    public int read(byte b[], int off, int len) throws IOException {
+			int r = read(curPos, b, off, len);
+			_seek(curPos + r);
+			return r;
+	    }
 		
 		@Override
 		public int read(long position, byte[] buffer, int offset, int length)
 				throws IOException {
-			// TODO Auto-generated method stub
-			return 0;
+			/* check whether current ins can fulfill this request */
+			//LOG.debug(String.format("read(%d, buffer, %d, %d)", position, offset, length));
+			PartInfo curPart = parts[curPartIdx];
+			if (curPart._offset <= position) {
+				long bytesLeft = curPart._length - (position - curPart._offset);
+				if (bytesLeft == 0) {
+					throw new IOException("Unimpl: a part end");
+				}
+				long bytesRead = Math.min(bytesLeft, (long)length); 
+				return curIn.read(position - curPart._offset, buffer, offset, (int)bytesRead);
+			}
+			
+			throw new IOException("Unimpl");
+			//return 0;
 		}
 		@Override
 		public void readFully(long position, byte[] buffer, int offset,
 				int length) throws IOException {
-			// TODO Auto-generated method stub
-			
+			int l = 0;
+			int left = length;
+			while (l < length) {
+				position += l;
+				offset += l;
+				left -= l;
+				l += read(position, buffer, offset, length);
+			}
 		}
 		@Override
 		public void readFully(long position, byte[] buffer) throws IOException {
-			//
+			readFully(position, buffer, 0, buffer.length);
 		}
+		
+		private void _seek(long pos) throws IOException {
+			curPos = pos;
+		}
+
 		@Override
 		public void seek(long pos) throws IOException {
-			// TODO Auto-generated method stub
-			
+			_seek(pos);
 		}
+		
+		
 		@Override
 		public long getPos() throws IOException {
-			// TODO Auto-generated method stub
-			return 0;
+			return curPos;
 		}
+		
 		@Override
 		public boolean seekToNewSource(long targetPos) throws IOException {
 			return false;
 		}
 		@Override
 		public int read() throws IOException {
-			// TODO Auto-generated method stub
-			throw new IOException("unimpl");
-			//return 0;
+			byte[] buf = new byte[1];
+			readFully(curPos, buf);
+			_seek(curPos + 1);
+			return (int)(buf[0]) & 0xFF;
 		}
-
+		
 	}
 	
 	@Override
@@ -818,7 +862,7 @@ public class NKFileSystem extends FileSystem {
 		
 		/* check parity path */
 		FileStatus[] parts = baseFS.listStatus(ptran.getBaseParityDirPath());
-		return new FSDataInputStream(new NKFSDataInputStream(f, parts, bufferSize));
+		return new FSDataInputStream(new NKFSInputStream(f, parts, bufferSize));
 	}
 
 	public static void main(String[] args) {

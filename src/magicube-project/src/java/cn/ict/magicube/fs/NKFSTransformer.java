@@ -7,9 +7,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.net.URI;
 
 import cn.ict.magicube.math.GaloisField;
@@ -50,20 +53,25 @@ public class NKFSTransformer {
 	}
 
 	public static class BlockInfo implements Writable {
-		public Path path;
+		public Path topFSPath;
 		public long offset;
 		public long length;
-
 		
-		public BlockInfo(Path p, long s, long l) {
-			path = p;
-			offset = s;
-			length = l;
+		public Path srcPath;
+		public long srcOffset;
+		public BlockInfo(Path topFSPath, long offset, long length,
+				Path srcPath, long srcOffset) {
+			this.topFSPath = topFSPath;
+			this.offset = offset;
+			this.length = length;
+			this.srcPath = srcPath;
+			this.srcOffset = srcOffset;
 		}
 		
 		public BlockInfo() {
-			path = null;
-			offset = length = -1L;
+			topFSPath = null;
+			srcPath = null;
+			offset = length = srcOffset = -1L;
 		}
 		
 		//////////////////////////////////////////////////
@@ -78,21 +86,25 @@ public class NKFSTransformer {
 		}
 		@Override
 		public void write(DataOutput out) throws IOException {
-			Text.writeString(out, path.toUri().toString());
+			Text.writeString(out, topFSPath.toUri().toString());
 			Text.writeString(out, Long.toString(offset));
 			Text.writeString(out, Long.toString(length));
+			Text.writeString(out, srcPath.toUri().toString());
+			Text.writeString(out, Long.toString(srcOffset));
 		}
 
 		@Override
 		public void readFields(DataInput in) throws IOException {
-			path = new Path(URI.create(Text.readString(in)));
+			topFSPath = new Path(URI.create(Text.readString(in)));
 			offset = Long.parseLong(Text.readString(in));
 			length = Long.parseLong(Text.readString(in));
+			srcPath = new Path(URI.create(Text.readString(in)));
+			srcOffset = Long.parseLong(Text.readString(in));
 		}
 		
 		@Override
 		public String toString() {
-			return path.toString() + ": " + Long.toString(offset) + " -- +" + Long.toString(length);
+			return topFSPath.toString() + ": " + Long.toString(offset) + " -- +" + Long.toString(length);
 		}
 	} 
 
@@ -142,7 +154,7 @@ public class NKFSTransformer {
 		
 		long _offset;
 		long _length;
-		Path _originalPath;
+		Path _srcPath;
 		Path _partDir;
 		
 		private void makeOriginPart() throws IOException {
@@ -157,7 +169,7 @@ public class NKFSTransformer {
 			FSDataOutputStream out = null;
 			FSDataInputStream in = null;
 			try {
-				in = baseFS.open(_originalPath);
+				in = baseFS.open(_srcPath);
 				out = baseFS.create(originPartPath, originRepl);
 				in.seek(_offset);
 
@@ -200,32 +212,33 @@ public class NKFSTransformer {
 			return v;
 		}
 		
-		public void makeParities() throws IOException {
-			LOG.info("create parities");
-			int N = topFS.getN();
+		public void makeParities(Integer[] parityNums) throws IOException {
+			LOG.info("create parities for following pivots:");
+			for (Integer p : parityNums) {
+				LOG.info("\tparity " + p.toString());
+			}
 			int K = topFS.getK();
 			short parityRepl = (short)conf.getInt("nkfs.parity.replication", 1);
-			int parityShift = (short)conf.getInt("nkfs.parity.coding.shift", 3);
 
 			GaloisField GF = GaloisField.getInstance();
-			int[][] pivots = new int[N][];
-			for (int i = 0; i < N; i++) {
-				pivots[i] = GF.makePivot(i + parityShift, K);
+			int[][] pivots = new int[parityNums.length][];
+			for (int i = 0; i < parityNums.length; i++) {
+				pivots[i] = GF.makePivot(parityNums[i], K);
 			}
 			
-			OutputStream[] paritiesOS = new OutputStream[N];
+			OutputStream[] paritiesOS = new OutputStream[parityNums.length];
 			FSDataInputStream in = null;
-			Path[] paritiesPaths = new Path[N];
+			Path[] paritiesPaths = new Path[parityNums.length];
 
-			for (int i = 0; i < N; i++) {
+			for (int i = 0; i < parityNums.length; i++) {
 				paritiesOS[i] = null;
 			}
 			
 			try{
-				in = baseFS.open(_originalPath);
+				in = baseFS.open(_srcPath);
 				in.seek(_offset);
-				for (int i = 0; i < N; i++) {
-					String parityFileName = "parity_" + Integer.toString(i + parityShift);
+				for (int i = 0; i < parityNums.length; i++) {
+					String parityFileName = "parity_" + Integer.toString(parityNums[i]);
 					paritiesPaths[i] = NKFileSystem.resolvePath(_partDir, parityFileName);
 					LOG.info("writing to " + paritiesPaths[i].toUri());
 					paritiesOS[i] = baseFS.create(paritiesPaths[i], parityRepl);
@@ -241,7 +254,7 @@ public class NKFSTransformer {
 						buf[i] = in.read() & 0xFF;
 					}
 					bytesProcessed += i;
-					for (i = 0; i < N; i++) {
+					for (i = 0; i < parityNums.length; i++) {
 						int v = vectorMul(GF, buf, pivots[i]);
 						paritiesOS[i].write(v);
 					}
@@ -258,7 +271,7 @@ public class NKFSTransformer {
 			/* check length */
 			long expected_len = (_length + K) / K;
 			boolean error = false;
-			for (int i = 0; i < N; i++) {
+			for (int i = 0; i < parityNums.length; i++) {
 				if (baseFS.getFileStatus(paritiesPaths[i]).getLen() != expected_len) {
 					String errstr = String.format("write to %s failed: except write %d bytes but wrote %d bytes.",
 							paritiesPaths[i].toUri(), expected_len, baseFS.getFileStatus(paritiesPaths[i]).getLen());
@@ -278,12 +291,12 @@ public class NKFSTransformer {
 			initialize(context.getConfiguration());
 			LOG.debug("initialize complete");
 			
-			_originalPath = value.path;
-			_offset = value.offset;
+			_srcPath = value.srcPath;
+			_offset = value.srcOffset;
 			_length = value.length;
 			
 			/* create parity dir */
-			Path topPath = topFS.convertFromBaseOrigin(_originalPath);
+			Path topPath = topFS.convertFromBaseOrigin(value.topFSPath);
 			NKFileSystem.PathTranslator ptran = topFS.new PathTranslator(topPath);
 			Path parityDir = ptran.getBaseParityDirPath();
 			baseFS.mkdirs(parityDir);
@@ -293,12 +306,24 @@ public class NKFSTransformer {
 			_partDir = NKFileSystem.resolvePathToDir(parityDir, partDirName);
 			LOG.debug("_partDir=" + _partDir.toUri());
 
+			LOG.debug("key = " + key.toString());
 			boolean origin = key.toString().equalsIgnoreCase("origin");
-			
 			if (origin) {
 				makeOriginPart();
 			} else {
-				makeParities();
+				String[] keyTokens = key.toString().split(" ");
+				ArrayList<Integer> parityNums = new ArrayList<Integer>();
+				Pattern pattern = Pattern.compile("\\d+");
+				for (String tok : keyTokens) {
+					Matcher m = pattern.matcher(tok);
+					if (m.find()) {
+						parityNums.add(Integer.parseInt(tok));
+						LOG.debug("add parity " + tok);
+					}
+				}
+				Integer[] a = new Integer[parityNums.size()];
+				parityNums.toArray(a);
+				makeParities(a);
 			}
 		}
 	}
@@ -350,7 +375,7 @@ public class NKFSTransformer {
 		}
 	}
 
-	static void createJobInputFile() throws Exception {
+	static void createJobInputFile(int[] paritiesToken) throws Exception {
 		baseFS.mkdirs(jobInputPath.getParent());
 		if (baseFS.exists(jobInputPath))
 			throw new Exception("Another NKFS transforming is working. try to remove " + jobInputPath.toString());
@@ -370,10 +395,20 @@ public class NKFSTransformer {
 	        	for (BlockLocation block : blocks) {
 	        		BlockInfo info = new BlockInfo(
 	        				baseFS.makeQualified(stat.getPath()),
-	        				block.getOffset(), block.getLength());
+	        				block.getOffset(), block.getLength(),
+	        				baseFS.makeQualified(stat.getPath()),
+	        				block.getOffset()
+	        				);
 	        		writer.append(new Text("origin"), info);
 	        		LOG.info("append to seq file: origin : " + info.toString());
-	        		writer.append(new Text("parities"), info);
+	        		
+	        		StringBuilder keybuilder = new StringBuilder("parities");
+	        		for (int t : paritiesToken) {
+	        			keybuilder.append(" ");
+	        			keybuilder.append(t);
+	        		}
+	        		
+	        		writer.append(new Text(keybuilder.toString()), info);
 	        		LOG.info("append to seq file: parities : " + info.toString());
 	        	}
 	        }
@@ -419,7 +454,13 @@ public class NKFSTransformer {
 					jobInputPath.toUri().getPath(),
 					null));
 			
-			createJobInputFile();
+			int parityShift = (short)conf.getInt("nkfs.parity.coding.shift", 3);
+			int N = topFS.getN();
+			int[] paritiesTokens = new int[N];
+			for (int i = 0; i < N; i++) {
+				paritiesTokens[i] = i + parityShift;
+			}
+			createJobInputFile(paritiesTokens);
 			jobOutputDirPath = new Path(conf.get("nkfs.working.output.dir",
 					"/tmp/working/out"));
 			jobOutputDirPath = new Path(
