@@ -251,7 +251,13 @@ public class NKFSTransformer {
 					long leftBytes = _length - bytesProcessed;
 					int i;
 					for (i = 0; i < Math.min(K, leftBytes); i++) {
-						buf[i] = in.read() & 0xFF;
+						try {
+							buf[i] = in.read() & 0xFF;
+						} catch (IOException e) {
+							e.printStackTrace();
+							LOG.info("read get exception: " + e.getClass());
+							buf[i] = 0;
+						}
 					}
 					bytesProcessed += i;
 					for (i = 0; i < parityNums.length; i++) {
@@ -269,7 +275,7 @@ public class NKFSTransformer {
 			}
 			
 			/* check length */
-			long expected_len = (_length + K) / K;
+			long expected_len = (_length + K - 1) / K;
 			boolean error = false;
 			for (int i = 0; i < parityNums.length; i++) {
 				if (baseFS.getFileStatus(paritiesPaths[i]).getLen() != expected_len) {
@@ -479,12 +485,18 @@ public class NKFSTransformer {
 			}
 			
 			//////
+			// TODO: remove origin files should reside in reduce task
+			// for map task failuer...
+			/////
+			
+			//////
 			// create mapreduce job
 			//////
+			boolean successful = false;
 			try {
 				Job job = createJob();
 				job.submit();
-				job.waitForCompletion(true);
+				successful = job.waitForCompletion(true);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -493,12 +505,14 @@ public class NKFSTransformer {
 			baseFS.delete(jobOutputDirPath, true);
 			LOG.info("job finished");
 			
-			LOG.info("remove write permission for original files," +
-					"then remove origin part");
-			for (FileStatus stat : originFiles) {
-				topFS.finishTransformOriginPath(stat.getPath());
+			if (successful) {
+				LOG.info("remove write permission for original files," +
+				"then remove origin part");
+				for (FileStatus stat : originFiles) {
+					topFS.finishTransformOriginPath(stat.getPath());
+				}
 			}
-			
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

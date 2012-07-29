@@ -1,12 +1,12 @@
 package cn.ict.magicube.fs;
 
 import java.io.DataInput;
+import java.io.EOFException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
@@ -210,7 +210,7 @@ public class NKFileSystem extends FileSystem {
 		return convertFromBasePath(getBaseMetaDir(), p);
 	}
 
-	public Path convertToDir(Path p) {
+	public static Path convertToDir(Path p) {
 		return new Path(
 			URI.create(
 				p.toUri().toString() + Path.SEPARATOR
@@ -356,7 +356,7 @@ public class NKFileSystem extends FileSystem {
 	class NKFileStatus extends FileStatus {
 		private FileStatus _baseStatus;
 		private Path _path;
-		private long _length;
+		private long _length = -1;
 		public NKFileStatus(FileStatus baseStatus, Path path) {
 			this._baseStatus = baseStatus;
 			this._path = path;
@@ -365,6 +365,8 @@ public class NKFileSystem extends FileSystem {
 		public long getLen() {
 			if (!_baseStatus.isFile())
 				return _baseStatus.getLen();
+			if (_length > 0)
+				return _length;
 			try {
 				PathTranslator ptran = new PathTranslator(_path);
 				if (!isRaidedFile(ptran)) {
@@ -379,7 +381,8 @@ public class NKFileSystem extends FileSystem {
 				//LOG.warn(stats[0].getPath().getName());
 				String fn = stats[0].getPath().getName();
 				String length_str = fn.replaceFirst("length-", "");
-				return Long.parseLong(length_str);
+				_length = Long.parseLong(length_str);
+				return _length;
 			} catch (IOException e) {
 				e.printStackTrace();
 				return -1;
@@ -600,6 +603,9 @@ public class NKFileSystem extends FileSystem {
 		return true;
 	}
 	
+	//@Override
+	
+	
 	/////////////////////////////
 	// File IO stuff
 	/////////////////////////////
@@ -685,16 +691,8 @@ public class NKFileSystem extends FileSystem {
 	}
 
 	
-	private class NKFSInputStream extends InputStream implements Seekable, PositionedReadable {
-		
-		private class PartInfo implements Comparable<PartInfo> {
-			class PartInfoComparator implements Comparator<PartInfo> {
-				@Override
-				public int compare(PartInfo o1, PartInfo o2) {
-					return o1.compareTo(o2);
-				}
-			}
-			
+	private static class NKFSInputStream extends InputStream implements Seekable, PositionedReadable {
+		private static class PartInfo implements Comparable<PartInfo> {
 			final Path _partDir;
 			final Path _partOriginFile;
 			final Path _topFilePath;
@@ -718,13 +716,6 @@ public class NKFileSystem extends FileSystem {
 				_partOriginFile = new Path(_partDir.toUri().resolve("origin"));
 			}
 			
-			/* create a object for search only */
-			PartInfo(long offset) {
-				_offset = offset;
-				_partDir = _partOriginFile = _topFilePath = null;
-				_length = -1;
-			}
-			
 			@Override
 			public String toString() {
 				return String.format("%s (%s): %d -- +%d",
@@ -742,63 +733,115 @@ public class NKFileSystem extends FileSystem {
 			}
 		};
 		
+		private final FileSystem _baseFS;
+		private final int _bufferSize;
+		private final Path _topPath;
+
 		private PartInfo[] parts;
-		private Path topPath;
 		private long curPos;
 		private int curPartIdx;
 		private FSDataInputStream curIn;
 		
-		private Path getCurPartOriginFile() {
-			PartInfo part = null;
-			for (PartInfo p : parts) {
-				if ((p._offset <= curPos) && (p._offset + p._length > curPos)) {
-					part = p;
-					break;
-				}
-			}
-			if (part == null)
-				return null;
-			return part._partOriginFile;
+		private static int checkPos(PartInfo p, long pos) {
+			if (p._offset > pos)
+				return -1;
+			if (p._offset + p._length <= pos)
+				return 1;
+			return 0;
 		}
 		
-		private NKFSInputStream(Path topPath, FileStatus[] partsDirs, int bufferSize) throws IOException {
+		public static class SeekOOBException extends IOException {
+			private static final long serialVersionUID = 4539327049741018159L;
+			SeekOOBException(String str) {
+				super(str);
+			}
+		}
+		
+		private int findPart(long pos, int idx) throws IOException {
+			if ((idx < 0) || (idx >= parts.length))
+				throw new SeekOOBException(String.format("search file %s for %d failed",
+						_topPath.toUri(), pos));
+			int dir = checkPos(parts[idx], pos);
+			if (dir == 0)
+				return idx;
+			if (dir > 0)
+				return findPart(pos, idx + 1);
+			return findPart(pos, idx - 1);
+		}
+		
+		private NKFSInputStream(Path topPath, FileStatus[] partsDirs,
+				int bufferSize, FileSystem baseFS) throws IOException {
 			List<PartInfo> l = new LinkedList<PartInfo>();
 			for (FileStatus partDirStat : partsDirs) {
 				l.add(new PartInfo(topPath, partDirStat.getPath()));
 			}
+			
 			parts = new PartInfo[l.size()];
 			java.util.Collections.sort(l);
 			l.toArray(parts);
 			curPos = 0;
 			curPartIdx = 0;
-			curIn = baseFS.open(parts[curPartIdx]._partOriginFile, bufferSize);
+			_baseFS = baseFS;
+			_bufferSize = bufferSize;
+			_topPath = topPath;
+			curIn = _baseFS.open(parts[curPartIdx]._partOriginFile, bufferSize);
 		}
-		
-		@Override
-	    public int read(byte b[], int off, int len) throws IOException {
-			int r = read(curPos, b, off, len);
-			_seek(curPos + r);
-			return r;
-	    }
 		
 		@Override
 		public int read(long position, byte[] buffer, int offset, int length)
 				throws IOException {
+			
 			/* check whether current ins can fulfill this request */
-			//LOG.debug(String.format("read(%d, buffer, %d, %d)", position, offset, length));
 			PartInfo curPart = parts[curPartIdx];
-			if (curPart._offset <= position) {
-				long bytesLeft = curPart._length - (position - curPart._offset);
-				if (bytesLeft == 0) {
-					throw new IOException("Unimpl: a part end");
-				}
+			long bytesLeft = curPart._length - (position - curPart._offset);
+			if ((curPart._offset <= position) && (bytesLeft > 0)) {
+				// bytesLeft == 0 is a special case
+				// curIn can fulfill this request
 				long bytesRead = Math.min(bytesLeft, (long)length); 
 				return curIn.read(position - curPart._offset, buffer, offset, (int)bytesRead);
 			}
 			
-			throw new IOException("Unimpl");
-			//return 0;
+			// find specific part, open it, read then close
+			int newIdx = -1;
+			try {
+				newIdx = findPart(position, curPartIdx);
+			} catch (SeekOOBException e) {
+				return -1;
+			} 
+			PartInfo newPart = parts[newIdx];
+			FSDataInputStream targetIn = _baseFS.open(newPart._partOriginFile, _bufferSize);
+			long pos = position - newPart._offset;
+			bytesLeft = newPart._length - (position - newPart._offset);
+			long bytesRead = Math.min(bytesLeft, (long)length);
+			int r = targetIn.read(pos, buffer, offset, (int)bytesRead);
+			targetIn.close();
+			return r;
 		}
+				
+		@Override
+	    public int read(byte b[], int off, int len) throws IOException {
+			int r = curIn.read(b, off, len);
+			if (r > 0) {
+				try {
+					_seek(curPos + r);
+				} catch (SeekOOBException e) {
+				}
+			}
+			return r;
+			///////////// slow
+			/*
+			int r = read(curPos, b, off, len);
+			if (r > 0) {
+				try {
+					_seek(curPos + r);
+				} catch (SeekOOBException e) {
+					
+				}
+			}
+			return r;
+			*/
+	    }
+
 		@Override
 		public void readFully(long position, byte[] buffer, int offset,
 				int length) throws IOException {
@@ -818,8 +861,31 @@ public class NKFileSystem extends FileSystem {
 		
 		private void _seek(long pos) throws IOException {
 			curPos = pos;
+			PartInfo curPart = parts[curPartIdx];
+			int dir = 0;
+			if (pos < curPart._offset)
+				dir = -1;
+			if (pos >= curPart._offset + curPart._length)
+				dir = 1;
+			if (dir == 0)
+				return;
+			try {
+				curPartIdx = findPart(pos, curPartIdx + dir);
+			} catch (SeekOOBException e) {
+				PartInfo lastPart = parts[parts.length - 1];
+				curPos = lastPart._offset + lastPart._length;
+				throw e;
+			}
+			curIn.close();
+			curIn = _baseFS.open(parts[curPartIdx]._partOriginFile, _bufferSize);
 		}
 
+		@Override
+		public void close() throws IOException {
+			super.close();
+			curIn.close();
+		}
+		
 		@Override
 		public void seek(long pos) throws IOException {
 			_seek(pos);
@@ -838,8 +904,7 @@ public class NKFileSystem extends FileSystem {
 		@Override
 		public int read() throws IOException {
 			byte[] buf = new byte[1];
-			readFully(curPos, buf);
-			_seek(curPos + 1);
+			read(buf, 0, 1);
 			return (int)(buf[0]) & 0xFF;
 		}
 		
@@ -862,7 +927,7 @@ public class NKFileSystem extends FileSystem {
 		
 		/* check parity path */
 		FileStatus[] parts = baseFS.listStatus(ptran.getBaseParityDirPath());
-		return new FSDataInputStream(new NKFSInputStream(f, parts, bufferSize));
+		return new FSDataInputStream(new NKFSInputStream(f, parts, bufferSize, baseFS));
 	}
 
 	public static void main(String[] args) {
