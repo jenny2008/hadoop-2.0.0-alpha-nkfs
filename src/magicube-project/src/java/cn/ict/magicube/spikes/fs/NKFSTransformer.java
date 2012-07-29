@@ -1,4 +1,4 @@
-package cn.ict.magicube.fs;
+package cn.ict.magicube.spikes.fs;
 
 import java.io.DataInput;
 import java.io.DataOutput;
