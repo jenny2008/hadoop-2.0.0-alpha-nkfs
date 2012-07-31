@@ -324,7 +324,7 @@ public class GaloisField {
 	public int[] makePivot(int x, int n) {
 		int[] result = new int[n];
 		for (int i = 0; i < n; i++) {
-			result[i] = power(x, n);
+			result[i] = power(x, i);
 		}
 		return result;
 	}

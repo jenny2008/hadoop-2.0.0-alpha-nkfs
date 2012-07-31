@@ -18,7 +18,7 @@ import org.apache.hadoop.io.WritableFactory;
 import org.apache.hadoop.io.Text;
 import cn.ict.magicube.fs.NKFileSystem.NKPathTranslator;
 
-public class PartInfo implements Writable {
+public class PartInfo implements Writable, Comparable<PartInfo> {
 	static final Log LOG = LogFactory.getLog(PartInfo.class);
 
 	// source file in topFS
@@ -30,8 +30,6 @@ public class PartInfo implements Writable {
 	public Path srcPath;
 	public boolean isSrcTopPath;
 	public long srcOffset;
-	// for mapper only
-	public int parityNum;
 
 	//////////////////////////////////////////////////
 	// Writable
@@ -52,7 +50,6 @@ public class PartInfo implements Writable {
 		this.srcPath = qualifiedTopFSPath;
 		this.isSrcTopPath = true;
 		this.srcOffset = offset;
-		this.parityNum = -1;
 	}
 	
 	public PartInfo(Path qualifiedTopFSPath, long offset, long length,
@@ -96,12 +93,8 @@ public class PartInfo implements Writable {
 	
 	public PartInfo() {
 		qualifiedTopFSPath = srcPath = null;
-		offset = length = srcOffset = parityNum = -1;
+		offset = length = srcOffset = -1;
 		isSrcTopPath = false;
-	}
-	
-	public void setParityNum(int num) {
-		this.parityNum = num;
 	}
 	
 	public Path getPartDir(NKFileSystem topFS) {
@@ -118,12 +111,6 @@ public class PartInfo implements Writable {
 		Path partDir = getPartDir(topFS);
 		return PathUtils.resolvePath(partDir,
 				String.format("parity_%d", parityNum));
-	}
-	
-	public Path getParityFile(NKFileSystem topFS) throws IOException {
-		if (this.parityNum <= 0)
-			throw new IOException(String.format("parityNum is %d", parityNum));
-		return getParityFile(topFS, parityNum);
 	}
 	
 	public static int retriveParityNum(Path parityFilePath) {
@@ -148,7 +135,6 @@ public class PartInfo implements Writable {
 		Text.writeString(out, srcPath.toUri().toString());
 		Text.writeString(out, Long.toString(srcOffset));
 		Text.writeString(out, Boolean.toString(isSrcTopPath));
-		Text.writeString(out, Integer.toString(parityNum));
 	}
 	
 	@Override
@@ -159,7 +145,6 @@ public class PartInfo implements Writable {
 		srcPath = new Path(URI.create(Text.readString(in)));
 		srcOffset = Long.parseLong(Text.readString(in));
 		isSrcTopPath = Boolean.parseBoolean(Text.readString(in));
-		parityNum = Integer.parseInt(Text.readString(in));
 	}
 	
 	public static void main(String[] args) throws IOException {
@@ -169,10 +154,8 @@ public class PartInfo implements Writable {
 		topFS.initialize(URI.create("nkfs:///"), conf);
 		//topFS.setWorkingDirectory(new Path("/datax"));
 		PartInfo p1 = new PartInfo(
-				(new Path(URI.create("data/test"))), 0, 12345);
+				(new Path(URI.create("nkfs:///data/test"))), 0, 12345);
 		LOG.info(p1.getOriginFile(topFS));
-		p1.setParityNum(3);
-		LOG.info(p1.getParityFile(topFS));
 		LOG.info(p1.getParityFile(topFS, 4));
 		LOG.info(p1.getPartDir(topFS));
 		LOG.info("-------");
@@ -181,5 +164,22 @@ public class PartInfo implements Writable {
 		LOG.info(p2.getPartDir(topFS));
 		LOG.info(PartInfo.retriveParityNum(p2.getParityFile(topFS, 12)));
 	}
+
+	@Override
+	public int compareTo(PartInfo o) {
+		long diff = this.offset - o.offset;
+		if (diff == 0)
+			return 0;
+		if (diff > 0)
+			return 1;	
+		return -1;
+	}
 	
+	@Override
+	public String toString() {
+		return String.format("part:%s-%d-%d:src:%s-%d-%d(%s)",
+				qualifiedTopFSPath, offset, length,
+				srcPath, srcOffset, length,
+				Boolean.toString(isSrcTopPath));
+	}
 }

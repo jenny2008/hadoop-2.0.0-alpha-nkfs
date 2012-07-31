@@ -10,10 +10,10 @@ import org.apache.hadoop.fs.Path;
 public class PathUtils {
 	public static final Log LOG = LogFactory.getLog(PathUtils.class);
 
-	static Path BASE_ORIGIN_DIR = null;
-	static Path BASE_SHADOW_DIR = null;
-	static Path BASE_PARITIES_DIR = null;
-	static Path BASE_METADATA_DIR = null;	
+	public static Path BASE_ORIGIN_DIR = null;
+	public static Path BASE_SHADOW_DIR = null;
+	public static Path BASE_PARITIES_DIR = null;
+	public static Path BASE_METADATA_DIR = null;	
 	private static String BASE_DIR = null;
 
 	public static Path makeFilePath(Path path) {

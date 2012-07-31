@@ -512,10 +512,8 @@ public class NKFSTransformer {
 					topFS.finishTransformOriginPath(stat.getPath());
 				}
 			}
-
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
 	}
 }
