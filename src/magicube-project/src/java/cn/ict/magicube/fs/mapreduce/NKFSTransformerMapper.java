@@ -49,7 +49,10 @@ public class NKFSTransformerMapper extends Mapper<Text, PartInfo, Text, Text> {
 		_util.baseFS.mkdirs(partDir);
 		
 		// create parity creator
-		ParityCreator creator = ParityCreator.getInstance(_util.baseFS, partDir);
+		ParityCreator creator = ParityCreator.load(
+				ParityCreator.baseFS(_util.baseFS),
+				ParityCreator.partDir(partDir)
+				);
 		
 		// create IS and OS
 		OutputStream originOS = null;
@@ -87,8 +90,11 @@ public class NKFSTransformerMapper extends Mapper<Text, PartInfo, Text, Text> {
 			}
 			
 			// encode
-			int K = _util.K;
-			RaidAlgorithm raid = RaidAlgorithm.getRaidAlgorithm("nk", RaidNK.OPT_K.set(K));
+			RaidAlgorithm raid = RaidAlgorithm.load(
+					RaidAlgorithm.name(_util.raidAlgoName),
+					RaidAlgorithm.n(_util.N),
+					RaidAlgorithm.k(_util.K)
+					);			
 			raid.encode(is, paritiesOS, parityNums, value.length, originOS);
 			
 		} finally {

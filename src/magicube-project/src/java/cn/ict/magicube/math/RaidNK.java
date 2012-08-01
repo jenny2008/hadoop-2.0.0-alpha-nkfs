@@ -5,30 +5,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ServiceLoader;
 
-import org.apache.avro.util.ByteBufferInputStream;
-
-import cn.ict.magicube.math.RaidAlgorithm.NoSuchRaidAlgorithmException;
+import org.apache.hadoop.util.Options;
 
 public class RaidNK extends RaidAlgorithm {
-	
-	public static class OPT_K extends RaidAlgorithmOption {
-		private final int _K;
-		private OPT_K(int k) {
-			_K = k;
-		}
-		
-		int getK() {
-			return _K;
-		}
-		
-		public static OPT_K set(int k) {
-			return new OPT_K(k);
-		}
-	}
-	
 	private static int vectorMul(GaloisField GF, int[] v1, int[] v2) {
 		assert v1.length == v2.length;
 		int v = 0;
@@ -40,21 +21,14 @@ public class RaidNK extends RaidAlgorithm {
 		}
 		return v;
 	}
-
 	
 	private int K;
 	final GaloisField GF;
-	RaidNK(RaidAlgorithmOption ... options) {
-		super(options);
-		boolean kset = false;
-		for (RaidAlgorithmOption opt : options) {
-			if (opt instanceof OPT_K) {
-				K = ((OPT_K)(opt)).getK();
-				kset = true;
-				break;
-			}
-		}
-		if (!kset) {
+	RaidNK(RaidAlgorithm.Option ... options) {
+		super();
+		try {
+			K = Options.getOption(RaidAlgorithm.KOption.class, options).getValue();
+		} catch (IOException e) {
 			throw new IllegalArgumentException("K is not set");
 		}
 		GF = GaloisField.getInstance();
@@ -130,11 +104,20 @@ public class RaidNK extends RaidAlgorithm {
 			recoveredBytes += n;
 		}
 	}
+	
+	public static class NoSuchRaidAlgorithmException extends IllegalArgumentException {
+		private static final long serialVersionUID = -3638808367358470957L;		
+	}
 
 	
-	public static void main(String[] args) throws NoSuchRaidAlgorithmException, IOException {		
-		RaidAlgorithm nk = RaidAlgorithm.getRaidAlgorithm("nk",
-				new RaidNK.OPT_K(3));
+	public static void main(String[] args) throws NoSuchRaidAlgorithmException, IOException {
+		RaidAlgorithm nk = RaidAlgorithm.load(
+				RaidAlgorithm.name("nk"),
+				RaidAlgorithm.n(5),
+				RaidAlgorithm.k(3)
+				);
+		if (nk == null)
+			throw new NoSuchRaidAlgorithmException();
 		
 		byte[] buf = new byte[25];
 

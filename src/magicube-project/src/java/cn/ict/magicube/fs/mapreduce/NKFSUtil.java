@@ -14,6 +14,7 @@ public class NKFSUtil {
 	public final Configuration conf;
 	public final int N;
 	public final int K;
+	public final String raidAlgoName; 
 	
 	static {
 		Configuration.addDefaultResource("core-site.xml");
@@ -29,6 +30,7 @@ public class NKFSUtil {
 		
 		K = conf.getInt("nkfs.parity.k", 3);
 		N = conf.getInt("nkfs.parity.n", 5);
+		raidAlgoName = conf.get("nkfs.raidalgorithm", "nk");
 	}
 	
 	public NKFSUtil() throws IOException {
