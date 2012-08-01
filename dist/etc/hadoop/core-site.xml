@@ -63,5 +63,15 @@
 	  <value>hdfs:///</value>
   </property>
 
+
+  <property>
+	  <name>nkfs.parity.k</name>
+	  <value>2</value>
+  </property>
+
+  <property>
+	  <name>nkfs.parity.n</name>
+	  <value>5</value>
+  </property>
 </configuration>
 

@@ -92,7 +92,7 @@ public class NKFileSystem extends FileSystem {
 		}
 	}
 
-	private PartInfo[] getParts(NKPathTranslator ptran) throws IOException {
+	public PartInfo[] getParts(NKPathTranslator ptran) throws IOException {
 		FileStatus[] stats = _baseFS.listStatus(ptran.getParityDirPath());
 		List<PartInfo> partsList = new LinkedList<PartInfo>();
 		for (FileStatus stat : stats) {
@@ -429,8 +429,8 @@ public class NKFileSystem extends FileSystem {
 			this.setConf(new Configuration());
 
 		PathUtils.initialize(this.getConf());
-		String baseFSURI = conf.get("nkfs.baseFSURI", "hdfs:///");
-		this._baseFS = FileSystem.get(URI.create(baseFSURI), this.getConf());
+		URI baseFSURI = URI.create(conf.get("nkfs.baseFSURI", "hdfs:///"));
+		this._baseFS = FileSystem.get(baseFSURI, this.getConf());
 		LOG.debug("baseFS of NKFS is " + _baseFS.getClass());
 		createBaseFSLayout();
 	}
@@ -490,7 +490,6 @@ public class NKFileSystem extends FileSystem {
 			FileStatus r = new NKFileStatus(this, _baseFS, stat,
 					PathUtils.convertFromBaseShadow(stat.getPath()));
 			resStatus[i++] = r;
-			LOG.info(r.getPath());
 		}
 		return resStatus;
 	}
@@ -537,6 +536,7 @@ public class NKFileSystem extends FileSystem {
 		FileStatus s_shadow = _baseFS.getFileStatus(ptran.getShadowPath());
 		
 		if (s_shadow.isDirectory()) {
+			LOG.debug("target is dir: " + f);
 			_baseFS.delete(ptran.getMetadataDirPath(), true);
 			_baseFS.delete(ptran.getOriginPath(), true);
 			_baseFS.delete(ptran.getParityDirPath(), true);
@@ -544,12 +544,13 @@ public class NKFileSystem extends FileSystem {
 			return true;
 		}
 		
-		if (ptran.isRaidedFile()) {
-			_baseFS.delete(ptran.getOriginPath(), false);
-			_baseFS.delete(ptran.getShadowPath(), false);
+		if (!ptran.isRaidedFile()) {
+			LOG.debug("target is unraided file: " + f);
+			_baseFS.delete(ptran.getOriginPath(), true);
+			_baseFS.delete(ptran.getShadowPath(), true);
 			return true;
 		}
-		
+		LOG.debug("target raided file: " + f);
 		_baseFS.delete(ptran.getMetadataDirPath(), true);
 		_baseFS.delete(ptran.getParityDirPath(), true);
 		_baseFS.delete(ptran.getShadowPath(), true);

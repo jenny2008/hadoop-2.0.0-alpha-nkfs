@@ -50,9 +50,8 @@ public class NKFSTransformerMapper extends Mapper<Text, PartInfo, Text, Text> {
 		
 		// create parity creator
 		ParityCreator creator = ParityCreator.load(
-				ParityCreator.baseFS(_util.baseFS),
-				ParityCreator.partDir(partDir)
-				);
+				_util.baseFS,
+				partDir);
 		
 		// create IS and OS
 		OutputStream originOS = null;
@@ -60,7 +59,6 @@ public class NKFSTransformerMapper extends Mapper<Text, PartInfo, Text, Text> {
 		FSDataInputStream is = null;
 
 		List<Integer> l_parityNums = new LinkedList<Integer>();
-		List<OutputStream> l_paritiesOS = new LinkedList<OutputStream>();
 		
 		int[] parityNums = null;
 		try {	
@@ -73,18 +71,18 @@ public class NKFSTransformerMapper extends Mapper<Text, PartInfo, Text, Text> {
 			
 			for (String op : s_ops) {
 				if (op.equals("0"))
-					originOS = creator.createStream("origin");
+					creator.addOutputPath("origin", true);
 				else {
-					//lst.add(creator.createStream(String.format("parity_%d", op)));
 					int n = Integer.parseInt(op);
 					l_parityNums.add(n);
-					l_paritiesOS.add(creator.createStream(String.format("parity_%d", n)));
+					creator.addOutputPath(String.format("parity_%d", n), false);
 				}
 			}
-			paritiesOS = new OutputStream[l_paritiesOS.size()];
+			
+			originOS = creator.getOriginOutputStream();
+			paritiesOS = creator.getOutputStreams();
 			parityNums = new int[l_parityNums.size()];
 			
-			l_paritiesOS.toArray(paritiesOS);
 			for (int i = 0; i < l_parityNums.size(); i++) {
 				parityNums[i] = l_parityNums.get(i);
 			}
@@ -106,6 +104,7 @@ public class NKFSTransformerMapper extends Mapper<Text, PartInfo, Text, Text> {
 				for (OutputStream os : paritiesOS)
 					os.close();
 			}
-		}		
+		}
+		context.progress();
 	}
 }

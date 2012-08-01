@@ -3,6 +3,7 @@ package cn.ict.magicube.fs;
 import java.io.IOException;
 
 import java.io.OutputStream;
+import java.util.List;
 import java.util.ServiceLoader;
 
 import org.apache.hadoop.fs.FileSystem;
@@ -10,24 +11,27 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.util.Options;
 
 public abstract class ParityCreator {
-	public static interface Option {}
-	static class BaseFSOption extends Options
-		implements Option {
-		private final FileSystem _baseFS;
-		public FileSystem getValue() {
-			return _baseFS;
-		}
-		BaseFSOption(FileSystem baseFS) {
-			_baseFS = baseFS;
-		}
+	protected final FileSystem _baseFS;
+	protected final Path _partDirPath;
 
+	public void addOutputPath(String filename, boolean isOrigin) throws IOException {
+		Path filePath = new Path(_partDirPath, filename);
+		addOutputPath(filePath, isOrigin);
 	}
-	static class PartDirOption extends Options.PathOption
-		implements Option {
-		PartDirOption(Path partDir) {
-			super(partDir);
-		}
+	
+	//public abstract OutputStream createStream(Path filePath) throws IOException;
+	public abstract void addOutputPath(Path filePath, boolean isOrigin) throws IOException;
+	public abstract OutputStream[] getOutputStreams() throws IOException;
+	public abstract OutputStream getOriginOutputStream() throws IOException;
+	public abstract void reset();
+	 
+	
+	protected ParityCreator(FileSystem baseFS, Path partDirPath) {
+		_baseFS = baseFS;
+		_partDirPath = partDirPath;
 	}
+
+	public static interface Option {}
 	static class NameOption extends Options.StringOption
 		implements Option {
 			NameOption(String name) {
@@ -35,40 +39,32 @@ public abstract class ParityCreator {
 			}
 	}
 
-	public static Option baseFS(FileSystem baseFS) {
-		return new BaseFSOption(baseFS);
-	}
-	public static Option partDir(Path partDir) {
-		return new PartDirOption(partDir);
+	public static Option name(String name) {
+		return new NameOption(name);
 	}
 	
-	protected final FileSystem _baseFS;
-	protected final Path _partDir;
 
-	public OutputStream createStream(String filename) throws IOException {
-		Path filePath = new Path(_partDir, filename);
-		return createStream(filePath);
-	}
-	
-	public abstract OutputStream createStream(Path filePath) throws IOException;
-	public abstract void reset();
-	
-	protected ParityCreator(FileSystem baseFS, Path partDir) {
-		_baseFS = baseFS;
-		_partDir = partDir;
-	}
 	
 	public static class NoSuchCreatorException extends IllegalArgumentException {
 		private static final long serialVersionUID = 1935313055210061417L;
 	}
-	public static ParityCreator load(Option ... opts) {
+	public static ParityCreator load(FileSystem baseFS,
+			Path partDirPath,
+			Option ... opts) {
 		ParityCreator creator = null;
 		ServiceLoader<ParityCreatorProvider> loader = ServiceLoader.load(ParityCreatorProvider.class);
 		for (ParityCreatorProvider p : loader) {
-			creator = p.create(opts);
+			if (p instanceof CommonParityCreatorProvider)
+				continue;
+			creator = p.create(baseFS, partDirPath, opts);
 			if (creator != null)
 				break;
 		}
+		if (creator == null)
+			creator = new CommonParityCreatorProvider().create(
+					baseFS,
+					partDirPath,
+					opts);
 		if (creator == null)
 			throw new NoSuchCreatorException();
 		return creator;

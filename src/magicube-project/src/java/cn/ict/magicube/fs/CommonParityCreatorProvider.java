@@ -1,32 +1,22 @@
 package cn.ict.magicube.fs;
 
-import java.io.IOException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 
-import org.apache.hadoop.util.Options;
-
-import cn.ict.magicube.fs.ParityCreator.BaseFSOption;
 import cn.ict.magicube.fs.ParityCreator.Option;
-import cn.ict.magicube.fs.ParityCreator.PartDirOption;
+
 
 public class CommonParityCreatorProvider extends ParityCreatorProvider {
-
+	static final Log LOG = LogFactory.getLog(CommonParityCreatorProvider.class);
+	
 	@Override
-	public ParityCreator create(Option ... options) {
-		try {
-			BaseFSOption baseFSOpt = Options.getOption(BaseFSOption.class, options);
-			PartDirOption partDirOpt = Options.getOption(PartDirOption.class, options);
-			if (baseFSOpt == null)
-				return null;
-			if (baseFSOpt.getValue() == null)
-				return null;
-			if (partDirOpt == null)
-				return null;
-			if (partDirOpt.getValue() == null)
-				return null;
-			return new CommonParityCreator(baseFSOpt.getValue(),
-					partDirOpt.getValue());
-		} catch (IOException e) {
+	public ParityCreator create(FileSystem baseFS, Path partDirPath, Option ... options) {
+		if (baseFS == null)
 			return null;
-		}
+		if (partDirPath == null)
+			return null;
+		return new CommonParityCreator(baseFS, partDirPath);
 	}
 }
