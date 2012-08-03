@@ -194,24 +194,27 @@ public class HDFSParityCreator extends ParityCreator {
 	public void reset() {
 		LOG.debug("reset HDFSParityCreator");
 		_excludedDatanodes = new HashSet<DatanodeInfo>();
+
+		originOS = null;
+		paritiesOSs = new LinkedList<OutputStream>();
+
+
 		try {
-			FileStatus[] stats = _dfs.listStatus(_partDirPath);
-			for (FileStatus stat : stats) {
-				LOG.debug("existing file: " + stat.getPath());
-				LocatedBlocks lbs = DFSClient.callGetBlockLocations(_unwrappedNamenode, 
-						getPathName(stat.getPath()), 0, stat.getLen());
-				for (LocatedBlock lb : lbs.getLocatedBlocks()) {
-					DatanodeInfo[] datanodes = lb.getLocations();
-					for (DatanodeInfo d : datanodes) {
-						LOG.debug("add " + d + " to excluded datanode set (existing file)");
-						_excludedDatanodes.add(d);
+			if (_dfs.exists(_partDirPath)) {
+				FileStatus[] stats = _dfs.listStatus(_partDirPath);
+				for (FileStatus stat : stats) {
+					LOG.debug("existing file: " + stat.getPath());
+					LocatedBlocks lbs = DFSClient.callGetBlockLocations(_unwrappedNamenode, 
+							getPathName(stat.getPath()), 0, stat.getLen());
+					for (LocatedBlock lb : lbs.getLocatedBlocks()) {
+						DatanodeInfo[] datanodes = lb.getLocations();
+						for (DatanodeInfo d : datanodes) {
+							LOG.debug("add " + d + " to excluded datanode set (existing file)");
+							_excludedDatanodes.add(d);
+						}
 					}
 				}
 			}
-			
-			originOS = null;
-			paritiesOSs = new LinkedList<OutputStream>();
-			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

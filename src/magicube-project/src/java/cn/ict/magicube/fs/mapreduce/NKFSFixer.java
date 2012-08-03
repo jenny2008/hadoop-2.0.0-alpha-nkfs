@@ -189,6 +189,15 @@ public class NKFSFixer extends NKFSUtil {
 			corruptedFiles.add(corruptedFile);
 		}
 		LOG.info("iterate over");
+		LOG.debug("XXXXXXXXXXXX");
+		if (LOG.isDebugEnabled()) {
+			RemoteIterator<Path> iterX = baseFS.listCorruptFileBlocks(new Path("/"));
+			while (iterX.hasNext()) {
+				Path corruptedFile = iterX.next();
+				LOG.info(String.format("file %s corrupted", corruptedFile));
+			}
+		}
+		LOG.debug("YYYYYYYYYYYY");
 		
 		boolean successful = false;
 		try {
