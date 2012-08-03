@@ -94,8 +94,10 @@ public class HDFSParityCreator extends ParityCreator {
 					if (originEx == null) {
 						originEx = new DatanodeInfo[0];
 					}
-					for (DatanodeInfo d : originEx)
+					for (DatanodeInfo d : originEx) {
 						_excludedDatanodes.add(d);
+						LOG.debug("add " + d + " to excluded datanode set (passed down)");
+					}
 					LocatedBlock result = null;
 					DatanodeInfo[] newEx = new DatanodeInfo[_excludedDatanodes.size()];
 					_excludedDatanodes.toArray(newEx);
@@ -195,12 +197,15 @@ public class HDFSParityCreator extends ParityCreator {
 		try {
 			FileStatus[] stats = _dfs.listStatus(_partDirPath);
 			for (FileStatus stat : stats) {
+				LOG.debug("existing file: " + stat.getPath());
 				LocatedBlocks lbs = DFSClient.callGetBlockLocations(_unwrappedNamenode, 
 						getPathName(stat.getPath()), 0, stat.getLen());
 				for (LocatedBlock lb : lbs.getLocatedBlocks()) {
 					DatanodeInfo[] datanodes = lb.getLocations();
-					for (DatanodeInfo d : datanodes)
+					for (DatanodeInfo d : datanodes) {
+						LOG.debug("add " + d + " to excluded datanode set (existing file)");
 						_excludedDatanodes.add(d);
+					}
 				}
 			}
 			

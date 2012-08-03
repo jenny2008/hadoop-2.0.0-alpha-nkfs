@@ -1,13 +1,15 @@
 package cn.ict.magicube.fs;
 
 import java.net.URI;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 
-public class PathUtils {
+public abstract class PathUtils {
 	public static final Log LOG = LogFactory.getLog(PathUtils.class);
 
 	public static Path BASE_ORIGIN_DIR = null;
@@ -87,6 +89,15 @@ public class PathUtils {
 		String fn = lengthFile.getName();
 		String length_str = fn.replaceFirst("length-", "");
 		return Long.parseLong(length_str);
+	}
+	
+	public static int retriveParityNum(Path parityPath) {
+		String fn = parityPath.getName();
+		Pattern pattern = Pattern.compile("^parity_(\\d+)$");
+		Matcher m = pattern.matcher(fn);
+		if (!m.find())
+			return -1;
+		return Integer.parseInt(m.group(1));
 	}
 	
 	public static void initialize(Configuration conf) {

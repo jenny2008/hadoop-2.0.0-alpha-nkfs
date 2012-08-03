@@ -2,14 +2,18 @@ package cn.ict.magicube.fs;
 
 import java.io.DataInput;
 import java.io.DataOutput;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Writable;
@@ -21,6 +25,41 @@ import cn.ict.magicube.fs.NKFileSystem.NKPathTranslator;
 public class PartInfo implements Writable, Comparable<PartInfo> {
 	static final Log LOG = LogFactory.getLog(PartInfo.class);
 
+	public class ParityInfo {
+		public final int _parityNum;
+		private final NKFileSystem _topFS;
+		private final FileSystem _baseFS;
+		public ParityInfo(NKFileSystem topFS, int parityNum) {
+			_parityNum = parityNum;
+			_topFS = topFS;
+			_baseFS = topFS.getBaseFS();
+		}
+		
+		public PartInfo getOwner() {
+			return PartInfo.this;
+		}
+		
+		public Path getParityFile() {
+			return PartInfo.this.getParityFile(_topFS, _parityNum);
+		}
+		
+		public Path getCorrespondingOriginFile() {
+			return PartInfo.this.getOriginFile(_topFS);
+		}
+		
+		public boolean exist() throws IOException {
+			return PartInfo.this.checkParityFile(_topFS, _parityNum); 
+		}
+		
+		public String toString() {
+			return String.format("parity %d for %s (%s)",
+					_parityNum,
+					PartInfo.this.qualifiedTopFSPath,
+					getParityFile().toUri()
+					);
+		}
+	}
+	
 	// source file in topFS
 	public Path qualifiedTopFSPath;
 	public long offset;
@@ -41,6 +80,22 @@ public class PartInfo implements Writable, Comparable<PartInfo> {
 			public Writable newInstance() { return new PartInfo(); }
 		});
 		Configuration.addDefaultResource("core-site.xml");
+	}
+	
+	public ParityInfo[] getExistingParities(NKFileSystem topFS) throws FileNotFoundException, IOException {
+		Path partDir = getPartDir(topFS);
+		FileStatus[] stats = topFS.getBaseFS().listStatus(partDir);
+		ArrayList<ParityInfo> lst = new ArrayList<ParityInfo>();
+		for (FileStatus s : stats) {
+			Path p = s.getPath();
+			int pn = PathUtils.retriveParityNum(p);
+			if (pn <= 0)
+				continue;
+			ParityInfo pi = new ParityInfo(topFS, pn);
+			lst.add(pi);
+		}
+		ParityInfo[] res = new ParityInfo[lst.size()];
+		return lst.toArray(res);
 	}
 	
 	public PartInfo(Path qualifiedTopFSPath, long offset, long length) {
@@ -97,6 +152,15 @@ public class PartInfo implements Writable, Comparable<PartInfo> {
 		isSrcTopPath = false;
 	}
 	
+	public PartInfo(PartInfo p) {
+		this.qualifiedTopFSPath = p.qualifiedTopFSPath;
+		this.offset = p.offset;
+		this.length = p.length;
+		this.srcPath = p.srcPath;
+		this.isSrcTopPath = p.isSrcTopPath;
+		this.srcOffset = p.srcOffset;
+	}
+	
 	public Path getPartDir(NKFileSystem topFS) {
 		NKPathTranslator ptran = topFS.new NKPathTranslator(qualifiedTopFSPath);
 		return ptran.getParityPartDirPath(offset, length);
@@ -111,6 +175,10 @@ public class PartInfo implements Writable, Comparable<PartInfo> {
 		Path partDir = getPartDir(topFS);
 		return PathUtils.resolvePath(partDir,
 				String.format("parity_%d", parityNum));
+	}
+	
+	public boolean checkParityFile(NKFileSystem topFS, int parityNum) throws IOException {
+		return topFS.getBaseFS().exists(getParityFile(topFS, parityNum));
 	}
 	
 	public static int retriveParityNum(Path parityFilePath) {
@@ -167,6 +235,12 @@ public class PartInfo implements Writable, Comparable<PartInfo> {
 
 	@Override
 	public int compareTo(PartInfo o) {
+		if (!this.qualifiedTopFSPath.equals(o.qualifiedTopFSPath)) {
+			throw new IllegalArgumentException(
+					String.format(
+					"Attemps to compare part of different file: %s vs. %s",
+					this.toString(), o.toString()));
+		}
 		long diff = this.offset - o.offset;
 		if (diff == 0)
 			return 0;
@@ -175,11 +249,30 @@ public class PartInfo implements Writable, Comparable<PartInfo> {
 		return -1;
 	}
 	
+	private String getDesc() {
+		return String.format("part:%s-%d-%d",
+				qualifiedTopFSPath, offset, length);
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (!(o instanceof PartInfo)) {
+			return false;
+		}
+		PartInfo po = (PartInfo)o;
+		return this.getDesc().equals(po.getDesc());
+	}
+	
 	@Override
 	public String toString() {
 		return String.format("part:%s-%d-%d:src:%s-%d-%d(%s)",
 				qualifiedTopFSPath, offset, length,
 				srcPath, srcOffset, length,
 				Boolean.toString(isSrcTopPath));
+	}
+	
+	@Override
+	public int hashCode() {
+		return this.getDesc().hashCode();
 	}
 }

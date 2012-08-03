@@ -14,7 +14,20 @@ public class NKFSUtil {
 	public final Configuration conf;
 	public final int N;
 	public final int K;
+	public final int parityShift;
 	public final String raidAlgoName; 
+	
+	public static long now() {
+		return System.currentTimeMillis();
+	}
+	
+	public int[] getParityNums() {
+		int[] res = new int[N];
+		for (int i = 0; i < N; i++) {
+			res[i] = i + parityShift;
+		}
+		return res;
+	}
 	
 	static {
 		Configuration.addDefaultResource("core-site.xml");
@@ -31,9 +44,10 @@ public class NKFSUtil {
 		K = conf.getInt("nkfs.parity.k", 3);
 		N = conf.getInt("nkfs.parity.n", 5);
 		raidAlgoName = conf.get("nkfs.raidalgorithm", "nk");
+		parityShift = conf.getInt("nkfs.parity.coding.shift", 3);
 	}
 	
 	public NKFSUtil() throws IOException {
 		this(null);
-	}
+	}	
 }

@@ -21,6 +21,8 @@ import org.apache.hadoop.util.ToolRunner;
 
 import cn.ict.magicube.fs.NKFileSystem;
 import cn.ict.magicube.fs.NKFileSystem.NKPathTranslator;
+import cn.ict.magicube.fs.mapreduce.NKFSFixer;
+import cn.ict.magicube.fs.mapreduce.NKFSTransformer;
 import cn.ict.magicube.fs.PartInfo;
 import cn.ict.magicube.fs.PathUtils;
 
@@ -47,14 +49,25 @@ public class NKFSShell extends FsShell {
 	protected void registerCommands(CommandFactory factory) {
 		factory.registerCommands(Reset.class);
 		factory.registerCommands(Unraid.class);
-		factory.registerCommands(CheckLocations.class);
+		factory.registerCommands(ShowLocations.class);
+		factory.registerCommands(DoRaid.class);
+		factory.registerCommands(DoFix.class);
 	}
 
 	static {
 		Configuration.addDefaultResource("core-site.xml");
 	}
 
-	public abstract static class NKFSCommand extends Command {
+	public abstract static class CommandEx extends Command {
+		protected void run(Path path) throws IOException {
+			throw new RuntimeException("not supposed to get here");
+		}
+		@Override
+		public String getCommandName() {
+			return getName();
+		}		
+	}
+	public abstract static class NKFSCommand extends CommandEx {
 		protected Configuration _conf = new Configuration();
 		protected NKFileSystem _topFS;
 		protected FileSystem _baseFS;
@@ -68,21 +81,43 @@ public class NKFSShell extends FsShell {
 			super.processOptions(args);
 			initialize();
 		}
-		protected void run(Path path) throws IOException {
-			throw new RuntimeException("not supposed to get here");
+	}
+
+	public static class DoFix extends CommandEx {
+		public static final String NAME = "dofix";
+		public static final String USAGE = "";
+		public static final String DESCRIPTION = "check and fix corrupted file(s)";
+		public static void registerCommands(CommandFactory factory) {
+			factory.addClass(DoFix.class, "-dofix");
 		}
-		@Override
-		public String getCommandName() {
-			return getName();
+
+		protected void processRawArguments(LinkedList<String> args) throws IOException {
+			NKFSFixer fixer = new NKFSFixer();
+			fixer.doFix();
 		}
 	}
 
-	public static class CheckLocations extends NKFSCommand {
-		public static final String NAME = "checklocations";
-		public static final String USAGE = "[<path> ...]";
-		public static final String DESCRIPTION = "check locations of file(s)";
+	
+	public static class DoRaid extends CommandEx {
+		public static final String NAME = "doraid";
+		public static final String USAGE = "";
+		public static final String DESCRIPTION = "raid unraided file(s)";
 		public static void registerCommands(CommandFactory factory) {
-			factory.addClass(CheckLocations.class, "-checklocations");
+			factory.addClass(DoRaid.class, "-doraid");
+		}
+
+		protected void processRawArguments(LinkedList<String> args) throws IOException {
+			NKFSTransformer transformer = new NKFSTransformer();
+			transformer.doTransform();
+		}
+	}
+	
+	public static class ShowLocations extends NKFSCommand {
+		public static final String NAME = "showlocations";
+		public static final String USAGE = "[<path> ...]";
+		public static final String DESCRIPTION = "show locations of file(s)";
+		public static void registerCommands(CommandFactory factory) {
+			factory.addClass(ShowLocations.class, "-showlocations");
 		}
 		@Override
 		protected void processOptions(LinkedList<String> args) throws IOException {
@@ -222,6 +257,12 @@ public class NKFSShell extends FsShell {
 			deleteDir("shadow", PathUtils.BASE_SHADOW_DIR);
 			deleteDir("origin", PathUtils.BASE_ORIGIN_DIR);
 			deleteDir("parities", PathUtils.BASE_PARITIES_DIR);
+			Path jobInputPath = new Path(_conf.get("nkfs.working.file",
+					"/tmp/working/in"));
+			deleteDir("jobinputpath", jobInputPath);
+			Path jobOutputDirPath = new Path(_conf.get("nkfs.working.output.dir",
+				"/tmp/working/out"));
+			deleteDir("joboutputpath", jobOutputDirPath);
 			out.println("nkfs is reset");
 		}
 	}

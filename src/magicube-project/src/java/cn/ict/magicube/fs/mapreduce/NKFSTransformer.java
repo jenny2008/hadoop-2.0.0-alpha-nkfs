@@ -1,9 +1,8 @@
 package cn.ict.magicube.fs.mapreduce;
 
-import java.io.FileNotFoundException;
-
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
@@ -67,11 +66,10 @@ public class NKFSTransformer extends NKFSUtil {
 		l.toArray(_originFiles);
 	}
 
-	private void createJobFile() throws Exception {
-		int parityShift = conf.getInt("nkfs.parity.coding.shift", 3);
+	private void createJobFile() throws IOException {
 		baseFS.mkdirs(_jobInputPath.getParent());
 		if (baseFS.exists(_jobInputPath))
-			throw new Exception("Another NKFS transforming is working. try to remove " + _jobInputPath.toString());
+			throw new IOException("Another NKFS transforming is working. try to remove " + _jobInputPath.toString());
 		LOG.debug("creating " + _jobInputPath);
 		FSDataOutputStream out = baseFS.create(_jobInputPath);
 		SequenceFile.Writer writer = null;
@@ -95,9 +93,10 @@ public class NKFSTransformer extends NKFSUtil {
 
 	        		StringBuilder keybuilder = new StringBuilder();
 	        		keybuilder.append("0");
-	        		for (int i = 0; i < N; i++) {
+	        	
+	        		for (int parityNum : getParityNums()) {
 	        			keybuilder.append(" ");
-	        			keybuilder.append(Integer.toString(i + parityShift));
+	        			keybuilder.append(Integer.toString(parityNum));
 	        		}
 	        		
 	        		writer.append(new Text(keybuilder.toString().trim()), info);
@@ -111,10 +110,6 @@ public class NKFSTransformer extends NKFSUtil {
 			}
 			out.close();
 		}
-	}
-
-	static long now() {
-		return System.currentTimeMillis();
 	}
 
 	private void createJob() throws IOException {
@@ -134,23 +129,28 @@ public class NKFSTransformer extends NKFSUtil {
 	    _job = job;
 	} 
 	
-	public void doTransform() throws Exception {
+	public void doTransform() throws IOException {
 		LOG.info("Do transform NKFS");
 		getAllOriginFiles();
 
-		_jobInputPath = new Path(conf.get("nkfs.working.file", "/tmp/working/in"));
-		_jobInputPath = new Path(
-				new URI(baseFS.getScheme(),
-				_jobInputPath.toUri().getPath(),
-				null));
-		_jobOutputDirPath = new Path(conf.get("nkfs.working.output.dir",
-					"/tmp/working/out"));
-		_jobOutputDirPath = new Path(
-				new URI(baseFS.getScheme(),
-						_jobOutputDirPath.toUri().getPath(),
-						null));
-		if (baseFS.exists(_jobOutputDirPath))
-			baseFS.delete(_jobOutputDirPath, true);
+		try {
+			_jobInputPath = new Path(conf.get("nkfs.working.file", "/tmp/working/in"));
+			_jobInputPath = new Path(
+					new URI(baseFS.getScheme(),
+							_jobInputPath.toUri().getPath(),
+							null));
+			_jobOutputDirPath = new Path(conf.get("nkfs.working.output.dir",
+			"/tmp/working/out"));
+			_jobOutputDirPath = new Path(
+					new URI(baseFS.getScheme(),
+							_jobOutputDirPath.toUri().getPath(),
+							null));
+			if (baseFS.exists(_jobOutputDirPath))
+				baseFS.delete(_jobOutputDirPath, true);
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+			throw new IOException(e.getMessage());
+		}
 
 		createJobFile();
 		
