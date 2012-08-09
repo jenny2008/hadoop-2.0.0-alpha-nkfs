@@ -3,7 +3,6 @@ package cn.ict.magicube.fs;
 import java.io.IOException;
 
 import java.io.OutputStream;
-import java.util.List;
 import java.util.ServiceLoader;
 
 import org.apache.hadoop.fs.FileSystem;
