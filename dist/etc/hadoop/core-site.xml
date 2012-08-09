@@ -55,12 +55,12 @@
 
   <property>
 	  <name>nkfs.basedir</name>
-	  <value>/nkfs_base</value>
+	  <value>/tmp/nkfs_base</value>
   </property>
 
   <property>
 	  <name>nkfs.baseFSURI</name>
-	  <value>hdfs:///</value>
+	  <value>file:///</value>
   </property>
 
 

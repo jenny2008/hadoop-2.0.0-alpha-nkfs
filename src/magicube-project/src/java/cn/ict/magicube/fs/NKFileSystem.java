@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -50,7 +51,16 @@ public class NKFileSystem extends FileSystem {
 		}
 		
 		public Path getTopFSPath() {
-			return new Path(Path.SEPARATOR + _abs);
+			try {
+				Path p = new Path(
+						new URI(NAME.getScheme(), Path.SEPARATOR + _abs, null)
+						);
+				return p;
+			} catch (URISyntaxException e) {
+				e.printStackTrace();
+				throw new IllegalArgumentException(e);
+			}
+			
 		}
 		
 		public Path getOriginPath() {
@@ -625,7 +635,7 @@ public class NKFileSystem extends FileSystem {
 	// Other stuff
 	////////////////
 	
-	@Override
+	//@Override
 	public BlockLocation[] getFileBlockLocations(FileStatus file,
 			long start, long len) throws IOException {
 		if (file == null) {
@@ -634,6 +644,8 @@ public class NKFileSystem extends FileSystem {
 		if (start < 0 || len < 0) {
 			throw new IllegalArgumentException("Invalid start or len parameter");
 		}
+		LOG.debug("getFileBlockLocations for file " + file.getPath());
+
 		if (file.getLen() < start) {
 			return new BlockLocation[0];
 		}
