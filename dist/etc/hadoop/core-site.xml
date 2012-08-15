@@ -17,62 +17,40 @@
 <!-- Put site-specific property overrides in this file. -->
 
 <configuration>
+
+
   <property>
     <name>fs.default.name</name>
-    <value>hdfs://wn:8020</value>
+    <value>hdfs://10.10.102.28:8020</value>
     <description>The name of the default file system.  Either the
       literal string "local" or a host:port for NDFS.
     </description>
     <final>true</final>
   </property>
-<!--
-  <property>
-	  <name>mapreduce.framework.name</name>
-	  <value>yarn</value>
-  </property>
--->
-  <!--
-  <property>
-	  <name>yarn.nodemanager.log-dirs</name>
-	  <value>/tmp/log</value>
-  </property>
-  -->
 
   <property>
-	  <name>fs.fake2.impl</name>
-	  <value>cn.ict.magicube.spikes.FakeFileSystem2</value>
+    <name>nkfs.basedir</name>
+    <value>/nkfs_base</value>
   </property>
 
   <property>
-	  <name>fs.fake.impl</name>
-	  <value>cn.ict.magicube.spikes.FakeFileSystem</value>
+    <name>nkfs.baseFSURI</name>
+    <value>hdfs:///</value>
   </property>
 
   <property>
-	  <name>fs.nkfs.impl</name>
-	  <value>cn.ict.magicube.fs.NKFileSystem</value>
+    <name>fs.nkfs.impl</name>
+    <value>cn.ict.magicube.fs.NKFileSystem</value>
   </property>
 
   <property>
-	  <name>nkfs.basedir</name>
-	  <value>/tmp/nkfs_base</value>
+    <name>nkfs.parity.n</name>
+    <value>3</value>
   </property>
 
   <property>
-	  <name>nkfs.baseFSURI</name>
-	  <value>file:///</value>
+    <name>nkfs.parity.k</name>
+    <value>2</value>
   </property>
-
-
-  <property>
-	  <name>nkfs.parity.k</name>
-	  <value>3</value>
-  </property>
-
-  <property>
-	  <name>nkfs.parity.n</name>
-	  <value>4</value>
-  </property>
-
 </configuration>
 
