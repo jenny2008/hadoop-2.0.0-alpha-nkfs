@@ -19,5 +19,14 @@
     <value>wn:8032</value>
   </property>
 
+<property>
+  <name>mapreduce.jobtracker.jobhistory.location</name>
+  <value>file:///tmp/jobhistory/</value>
+  <description> If job tracker is static the history files are stored 
+  in this single well known place. If No value is set here, by default,
+  it is in the local file system at ${hadoop.log.dir}/history.
+  </description>
+</property>
+
 </configuration>
 

@@ -220,8 +220,8 @@ public class NKFSFixer extends NKFSUtil {
 		} finally {
 			if (_jobInputPath != null)
 				baseFS.delete(_jobInputPath, true);
-			if (_jobOutputDirPath != null)
-				baseFS.delete(_jobOutputDirPath, true);
+			//if (_jobOutputDirPath != null)
+			//	baseFS.delete(_jobOutputDirPath, true);
 		}
 		
 		if (successful) {
