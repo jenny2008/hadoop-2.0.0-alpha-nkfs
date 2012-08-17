@@ -1,0 +1,17 @@
+127.0.0.1 localhost
+ 
+# The following lines are desirable for IPv6 capable hosts
+::1 ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+ff02::3 ip6-allhosts
+
+10.212.105.139	ec2-23-21-218-34.compute-1.amazonaws.com
+10.140.75.172	ec2-23-20-129-18.compute-1.amazonaws.com
+10.191.45.166	ec2-50-17-40-178.compute-1.amazonaws.com
+10.8.69.106	ec2-23-21-19-188.compute-1.amazonaws.com
+10.191.101.93	ec2-23-22-251-139.compute-1.amazonaws.com
+10.70.81.25	ec2-107-22-9-158.compute-1.amazonaws.com
+
