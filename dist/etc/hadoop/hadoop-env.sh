@@ -1,4 +1,4 @@
-JAVA_HOME=/home/fengqingqing/exp/java/jdk1.7.0_03
+JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64/
 this="${BASH_SOURCE-$0}"
 conf_dir=$(cd -P -- "$(dirname -- "$this")" && pwd -P)
 hadoop_base="${conf_dir}/../../"
