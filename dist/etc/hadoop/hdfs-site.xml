@@ -19,7 +19,7 @@
 <configuration>
 	<property>
 		<name>dfs.namenode.secondary.http-address</name>
-		<value>gb28:50090</value>
+		<value>ec2-23-21-218-34.compute-1.amazonaws.com:50090</value>
 	</property>
 </configuration>
 
