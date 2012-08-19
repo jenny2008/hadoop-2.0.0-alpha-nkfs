@@ -29,6 +29,16 @@
   </property>
 
   <property>
+	  <name>fs.s3.awsAccessKeyId</name>
+	  <value>AKIAJPUSZJ477HETFCAA</value>
+  </property>
+
+  <property>
+	  <name>fs.s3.awsSecretAccessKey</name>
+	  <value>Sh88z9xquBkMIe45kgXu0XhrQ+XCA6+CD2qdh1vt</value>
+  </property>
+
+  <property>
     <name>nkfs.basedir</name>
     <value>/nkfs_base</value>
   </property>
