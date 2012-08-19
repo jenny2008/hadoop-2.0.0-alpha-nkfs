@@ -35,22 +35,22 @@
   </property>
   <property>
 	  <name>fs.s3.awsAccessKeyId</name>
-	  <value>AKIAJPUSZJ477HETFCAA</value>
+	  <value>AKIAJYM2NEBPOLDAY7DQ</value>
   </property>
 
   <property>
 	  <name>fs.s3.awsSecretAccessKey</name>
-	  <value>Sh88z9xquBkMIe45kgXu0XhrQ+XCA6+CD2qdh1vt</value>
+	  <value>RSlApdje0pzdIP7Hb+WoXTNxXiLZAZlfYECNBLOa</value>
   </property>
 
   <property>
 	  <name>fs.s3n.awsAccessKeyId</name>
-	  <value>AKIAJPUSZJ477HETFCAA</value>
+	  <value>AKIAJYM2NEBPOLDAY7DQ</value>
   </property>
 
   <property>
 	  <name>fs.s3n.awsSecretAccessKey</name>
-	  <value>Sh88z9xquBkMIe45kgXu0XhrQ+XCA6+CD2qdh1vt</value>
+	  <value>RSlApdje0pzdIP7Hb+WoXTNxXiLZAZlfYECNBLOa</value>
   </property>
   <property>
     <name>nkfs.basedir</name>
