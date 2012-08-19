@@ -34,25 +34,6 @@
 	  <value>s3://wntest</value>
   </property>
   <property>
-	  <name>fs.s3.awsAccessKeyId</name>
-	  <value>AKIAJYM2NEBPOLDAY7DQ</value>
-  </property>
-
-  <property>
-	  <name>fs.s3.awsSecretAccessKey</name>
-	  <value>RSlApdje0pzdIP7Hb+WoXTNxXiLZAZlfYECNBLOa</value>
-  </property>
-
-  <property>
-	  <name>fs.s3n.awsAccessKeyId</name>
-	  <value>AKIAJYM2NEBPOLDAY7DQ</value>
-  </property>
-
-  <property>
-	  <name>fs.s3n.awsSecretAccessKey</name>
-	  <value>RSlApdje0pzdIP7Hb+WoXTNxXiLZAZlfYECNBLOa</value>
-  </property>
-  <property>
     <name>nkfs.basedir</name>
     <value>/nkfs_base</value>
   </property>
