@@ -18,7 +18,7 @@
 
 <configuration>
 
-
+	<!--
   <property>
     <name>fs.default.name</name>
     <value>hdfs://ec2-46-137-251-130.ap-southeast-1.compute.amazonaws.com:8020</value>
@@ -27,7 +27,12 @@
     </description>
     <final>true</final>
   </property>
+-->
 
+  <property>
+	  <name>fs.default.name</name>
+	  <value>s3://wntest</value>
+  </property>
   <property>
 	  <name>fs.s3.awsAccessKeyId</name>
 	  <value>AKIAJPUSZJ477HETFCAA</value>
