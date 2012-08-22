@@ -5,10 +5,72 @@ Part-1 I/O实验部分
 time ./bin/hdfs dfs -put /home/fengqingqing/exp/data/OANC-GrAF/data/large_txt nkfs:///
 记录数据写入时间
 完成后可用 ./bin/hdfs dfs -ls hdfs:///nkfs_base 查看到输入数据被放在hdfs:///nkfs_base/origin/目录下
-3、读出数据（记录数据读时间）（从nkfs与hdfs读出的时间对比）
-3、	运行time ./bin/hadoop  cn.ict.magicube.fs.shell.NKFSShell  -doraid 执行数据分片
+3、	读出数据（记录数据读时间）（从nkfs与hdfs读出的时间对比）
+4、	HDFS I/O测试 TestDFSIO
+运行 time ./bin/hadoop jar share/hadoop/mapreduce/hadoop-mapreduce-test-2.0.0-alpha.jar TestDFSIO -write -nrFiles 10 -fileSize 1000
+12/08/22 23:31:42 INFO fs.TestDFSIO: ----- TestDFSIO ----- : write
+12/08/22 23:31:42 INFO fs.TestDFSIO:            Date & time: Wed Aug 22 23:31:42 CST 2012
+12/08/22 23:31:42 INFO fs.TestDFSIO:        Number of files: 10
+12/08/22 23:31:42 INFO fs.TestDFSIO: Total MBytes processed: 10000.0
+12/08/22 23:31:42 INFO fs.TestDFSIO:      Throughput mb/sec: 9.783692345923967
+12/08/22 23:31:42 INFO fs.TestDFSIO: Average IO rate mb/sec: 9.845467567443848
+12/08/22 23:31:42 INFO fs.TestDFSIO:  IO rate std deviation: 0.8428745498763703
+12/08/22 23:31:42 INFO fs.TestDFSIO:     Test exec time sec: 120.224
+12/08/22 23:31:42 INFO fs.TestDFSIO: 
+
+real    2m1.828s
+user    0m4.314s
+sys     0m0.226s
+运行 cat TestDFSIO_results.log 可再次查看结果
+The files are written under the /benchmarks/TestDFSIO directory by default (this can
+be changed by setting the test.build.data system property), in a directory called
+io_data.
+改test.build.test为：/user/fengqingqing/io_data，运行
+
+更改test.build.test目录方法为：
+在etc/hadoop/hadoop-env.sh 文件最后增加
+export HADOOP_OPTS='-Dtest.build.data=`hdfs:///TestDFSIO'
+运行 . etc/hadoop/hadoop-env.sh
+之后再运行如下命令
+time ./bin/hadoop jar share/hadoop/mapreduce/hadoop-mapreduce-test-2.0.0-alpha.jar TestDFSIO -write -nrFiles 10 -fileSize 1000
+则将benchmarks/TestDFSIO改为在 hdfs:///之下
+
+12/08/23 00:38:35 INFO fs.TestDFSIO: ----- TestDFSIO ----- : write
+12/08/23 00:38:35 INFO fs.TestDFSIO:            Date & time: Thu Aug 23 00:38:35 CST 2012
+12/08/23 00:38:35 INFO fs.TestDFSIO:        Number of files: 10
+12/08/23 00:38:35 INFO fs.TestDFSIO: Total MBytes processed: 10000.0
+12/08/23 00:38:35 INFO fs.TestDFSIO:      Throughput mb/sec: 10.775107347006944
+12/08/23 00:38:35 INFO fs.TestDFSIO: Average IO rate mb/sec: 10.88630485534668
+12/08/23 00:38:35 INFO fs.TestDFSIO:  IO rate std deviation: 1.1495735589562772
+12/08/23 00:38:35 INFO fs.TestDFSIO:     Test exec time sec: 113.083
+12/08/23 00:38:35 INFO fs.TestDFSIO: 
+
+real    1m54.759s
+user    0m4.253s
+sys     0m0.228s
+TestDFSIO读测试：
+time ./bin/hadoop jar share/hadoop/mapreduce/hadoop-mapreduce-test-2.0.0-alpha.jar TestDFSIO -read -nrFiles 10 -fileSize 1000
+12/08/22 23:43:51 INFO fs.TestDFSIO: ----- TestDFSIO ----- : read
+12/08/22 23:43:51 INFO fs.TestDFSIO:            Date & time: Wed Aug 22 23:43:51 CST 2012
+12/08/22 23:43:51 INFO fs.TestDFSIO:        Number of files: 10
+12/08/22 23:43:51 INFO fs.TestDFSIO: Total MBytes processed: 10000.0
+12/08/22 23:43:51 INFO fs.TestDFSIO:      Throughput mb/sec: 83.9757478040342
+12/08/22 23:43:51 INFO fs.TestDFSIO: Average IO rate mb/sec: 118.45597076416016
+12/08/22 23:43:51 INFO fs.TestDFSIO:  IO rate std deviation: 90.20474422637334
+12/08/22 23:43:51 INFO fs.TestDFSIO:     Test exec time sec: 30.423
+12/08/22 23:43:51 INFO fs.TestDFSIO: 
+
+real    0m32.081s
+user    0m4.097s
+sys     0m0.217s
+
+When you’ve finished benchmarking, you can delete all the generated files from HDFS
+using the -clean argument:
+time ./bin/hadoop jar share/hadoop/mapreduce/hadoop-mapreduce-test-2.0.0-alpha.jar TestDFSIO –clean
+
+5、	运行time ./bin/hadoop  cn.ict.magicube.fs.shell.NKFSShell  -doraid 执行数据分片
 记录数据分片时间
-4、	运行 ./bin/hdfs dfs -ls hdfs:///nkfs_base/parities 可查看各个文件分片，分片之后的原始数据被放在hdfs:///nkfs_base/parities/xxx/part-xxx-xxx/origin目录下，各个分片分别为：
+6、	运行 ./bin/hdfs dfs -ls hdfs:///nkfs_base/parities 可查看各个文件分片，分片之后的原始数据被放在hdfs:///nkfs_base/parities/xxx/part-xxx-xxx/origin目录下，各个分片分别为：
 hdfs:///nkfs_base/parities/xxx/part-xxx-xxx/parity_x
 运行./bin/hadoop  cn.ict.magicube.fs.shell.NKFSShell  -showlocations nkfs:/// 可查看各分片所在位置
 5、（人为破坏掉部分分片，造成数据丢失）：
@@ -34,16 +96,30 @@ time ./bin/hadoop jar ./share/hadoop/mapreduce/hadoop-mapreduce-examples-2.0.0-a
 real    0m43.957s
 user    0m3.858s
 sys     0m0.193s
-
 其它jobs:
-
 3、	sort(in hdfs)：http://www.hadooper.cn/dct/page/65777
+First we generate some random data using RandomWriter. It runs a MapReduce job with
+10 maps per node, and each map generates (approximately) 10 GB of random binary
+data, with key and values of various sizes. You can change these values if you like by
+setting the properties test.randomwriter.maps_per_host and test.random
+write.bytes_per_map. There are also settings for the size ranges of the keys and values;
+see RandomWriter for details.
+
 ./bin/hadoop jar ./share/hadoop/mapreduce/hadoop-mapreduce-examples-2.0.0-alpha.jar randomwriter rand  生成随机文件
 time ./bin/hadoop jar ./share/hadoop/mapreduce/hadoop-mapreduce-examples-2.0.0-alpha.jar sort rand rand2sort 执行hadoop sort并记录完成时间
 real    26m33.907s
 user    0m7.439s
 sys     0m0.371s
 第一个命令会在rand 目录的生成没有排序的数据。第二个命令会读数据，排序，然后写入rand-sort 目录
+
+As a final sanity check, we validate the data in sorted-data is, in fact, correctly sorted:
+% hadoop jar $HADOOP_INSTALL/hadoop-*-test.jar testmapredsort -sortInput random-data \
+-sortOutput sorted-data
+This command runs the SortValidator program, which performs a series of checks on
+the unsorted and sorted data to check whether the sort is accurate. It reports the outcome
+to the console at the end of its run:
+SUCCESS! Validated the MapReduce framework's 'sort' successfully.
+
 
 4、Grep 例子从文本文件中，抽取匹配的字符串，并计算出现过多少次
 http://www.hadooper.cn/dct/page/65776
@@ -99,7 +175,14 @@ bin/hadoop jar hadoop-0.19.2-examples.jar terasort /terasort/input1TB /terasort/
 
 更多关于benchmark的介绍文章：
 http://baidutech.blog.51cto.com/4114344/743496
-
+Other benchmarks
+There are many more Hadoop benchmarks, but the following are widely used:
+• MRBench (invoked with mrbench) runs a small job a number of times. It acts as a good
+counterpoint to sort, as it checks whether small job runs are responsive.
+• NNBench (invoked with nnbench) is useful for load testing namenode hardware.
+• Gridmix is a suite of benchmarks designed to model a realistic cluster workload,
+by mimicking a variety of data-access patterns seen in practice. See src/benchmarks/
+gridmix2 in the distribution for further details.‖
 注：HDFS文件操作：http://yu06206.iteye.com/blog/1396376
 在HDFS上创建目录
 命令：user@namenode:hadoop$ bin/hadoop dfs -mkdir /文件名
@@ -138,4 +221,9 @@ time ./bin/hdfs dfs -put /home/fengqingqing/exp/data/OANC-GrAF/data/2g hdfs:///i
 real    0m23.780s
 user    0m13.819s
 sys     0m2.593s
+
+time ./bin/hdfs dfs -get rand2sort /tmp/   (rand2sort 41GB)
+real    9m20.413s
+user    2m17.151s
+sys     2m15.289s
 
