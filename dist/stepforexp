@@ -44,11 +44,14 @@ real    26m33.907s
 user    0m7.439s
 sys     0m0.371s
 第一个命令会在rand 目录的生成没有排序的数据。第二个命令会读数据，排序，然后写入rand-sort 目录
+
 4、Grep 例子从文本文件中，抽取匹配的字符串，并计算出现过多少次
 http://www.hadooper.cn/dct/page/65776
 为运行示例，输入以下命令:
 bin/hadoop org.apache.hadoop.examples.Grep <indir> <outdir> <regex> [<group>]
 （操作示例）:
+time ./bin/hadoop jar ./share/hadoop/mapreduce/hadoop-mapreduce-examples-2.0.0-alpha.jar grep hdfs:///input goutput '[a-z.]+'
+
 将输入文件拷贝到分布式文件系统：
 $ bin/hadoop fs -put conf input
 运行发行版提供的示例程序：
@@ -62,8 +65,40 @@ $ cat output/*
 在分布式文件系统上查看输出文件：
 $ bin/hadoop fs -cat output/*
 
+5、terasort
+http://blog.csdn.net/leafy1980/article/details/6633828
+操作过程如下：
+在hdfs生成2g测试数据：
+time ./bin/hadoop jar ./share/hadoop/mapreduce/hadoop-mapreduce-examples-2.0.0-alpha.jar teregen 21474836 /terasort/input2g
+real    0m42.833s
+user    0m3.781s
+sys     0m0.173s
+time ./bin/hadoop jar ./share/hadoop/mapreduce/hadoop-mapreduce-examples-2.0.0-alpha.jar terasort /terasort/input2g /terasort/output2g
+real    1m34.709s
+user    0m5.187s
+sys     0m0.273s
 
+在nkfs系统中：
+生成2g数据
+time ./bin/hadoop jar ./share/hadoop/mapreduce/hadoop-mapreduce-examples-2.0.0-alpha.jar teragen 21474836 nkfs:///terasort/input2g
+real    0m37.851s
+user    0m3.800s
+sys     0m0.178s
+执行terasort
+time ./bin/hadoop jar ./share/hadoop/mapreduce/hadoop-mapreduce-examples-2.0.0-alpha.jar teragen 21474836 nkfs:///terasort/input2g
+real    1m37.817s
+user    0m5.175s
+sys     0m0.257s
 
+在hadoop里，利用TeraGen生成排序输入数据的命令格式是这样的：
+bin/hadoop jar hadoop-0.19.2-examples.jar teragen 10000000000 /terasort/input1TB  
+注意，teragen后的数值单位是行数；因为每行100个字节，所以如果要产生1T的数据量，则这个数值应为1T/100=10000000000(10个0)。
+运行TeraSort的命令是这样的：
+bin/hadoop jar hadoop-0.19.2-examples.jar terasort /terasort/input1TB /terasort/output1TB
+运行后，我们可以看到会起m个mapper（取决于输入文件个数）和r个reducer（取决于设置项：mapred.reduce.tasks），排好序的结果存放在/terasort/output1TB目录。
+
+更多关于benchmark的介绍文章：
+http://baidutech.blog.51cto.com/4114344/743496
 
 注：HDFS文件操作：http://yu06206.iteye.com/blog/1396376
 在HDFS上创建目录
