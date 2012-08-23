@@ -1,0 +1,10 @@
+when starting ec2 hadoop cluster, if there is not enough storage space in HDFS, there maybe some problem, when you are trying to mkdir in the HDFS:
+
+ubuntu@ip-10-40-10-109:~/hadoop-2.0.0-alpha-nkfs/dist$ ./bin/hdfs dfs -mkdir input
+12/08/23 08:24:22 WARN util.KerberosName: Kerberos krb5 configuration not found, setting default realm to empty
+12/08/23 08:24:22 DEBUG fs.NKFileSystem: nkfs object created
+mkdir: Cannot create directory /user/ubuntu/input. Name node is in safe mode.
+
+when use the command: ./bin/hadoop dfsadmin -safemode leave, it doesn't work either.
+you should remove some big datas to make sure there are enough space in your storage system, and then execute  ./bin/hadoop dfsadmin -safemode leave, it doesn't work either. that will works.
+
