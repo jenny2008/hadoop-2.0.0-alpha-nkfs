@@ -17,6 +17,10 @@
 <!-- Put site-specific property overrides in this file. -->
 
 <configuration>
+	<property>
+		<name>fs.nkfs.impl</name>
+		<value>cn.ict.magicube.fs.NKFileSystem</value>
+	</property>
 
 	<property>
 		<name>fs.default.name</name>
