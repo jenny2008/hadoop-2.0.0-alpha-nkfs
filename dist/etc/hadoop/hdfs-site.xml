@@ -20,7 +20,7 @@
 
 	<property>
 		<name>dfs.namenode.secondary.http-address</name>
-		<value>ec2-46-137-251-130.ap-southeast-1.compute.amazonaws.com:50090</value>
+		<value>ec2-23-21-218-34.compute-1.amazonaws.com:50090</value>
 	</property>
 
 	<property>
