@@ -23,14 +23,8 @@
     <description>The name of the default file system.  Either the
       literal string "local" or a host:port for NDFS.
     </description>
-    <final>true</final>
+    <!--<final>true</final>-->
   </property>
-<!--
-  <property>
-	  <name>mapreduce.framework.name</name>
-	  <value>yarn</value>
-  </property>
--->
   <!--
   <property>
 	  <name>yarn.nodemanager.log-dirs</name>
@@ -55,14 +49,12 @@
 
   <property>
 	  <name>nkfs.basedir</name>
-	  <value>/tmp/nkfs_base</value>
+	  <value>/nkfs_base</value>
   </property>
-
   <property>
 	  <name>nkfs.baseFSURI</name>
-	  <value>file:///</value>
+	  <value>hdfs://wn:8020/</value>
   </property>
-
 
   <property>
 	  <name>nkfs.parity.k</name>

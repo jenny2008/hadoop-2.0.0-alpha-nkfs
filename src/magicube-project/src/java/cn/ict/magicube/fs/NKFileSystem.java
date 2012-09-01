@@ -543,7 +543,12 @@ public class NKFileSystem extends FileSystem {
 	public boolean delete(Path f, boolean recursive) throws IOException {
 		LOG.debug("deleting path " + f);
 		NKPathTranslator ptran = new NKPathTranslator(f);
-		FileStatus s_shadow = _baseFS.getFileStatus(ptran.getShadowPath());
+		FileStatus s_shadow;
+		try {
+			s_shadow = _baseFS.getFileStatus(ptran.getShadowPath());
+		} catch (FileNotFoundException e) {
+			return true;
+		}
 		
 		if (s_shadow.isDirectory()) {
 			LOG.debug("target is dir: " + f);
