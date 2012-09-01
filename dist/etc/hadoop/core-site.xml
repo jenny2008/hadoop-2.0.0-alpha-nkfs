@@ -50,12 +50,12 @@
 
   <property>
     <name>nkfs.parity.n</name>
-    <value>3</value>
+    <value>4</value>
   </property>
 
   <property>
     <name>nkfs.parity.k</name>
-    <value>2</value>
+    <value>3</value>
   </property>
 </configuration>
 
