@@ -18,34 +18,22 @@
 
 <configuration>
 
-	<!--
   <property>
     <name>fs.default.name</name>
     <value>hdfs://ec2-46-137-251-130.ap-southeast-1.compute.amazonaws.com:8020</value>
     <description>The name of the default file system.  Either the
       literal string "local" or a host:port for NDFS.
     </description>
-    <final>true</final>
   </property>
--->
 
-  <property>
-	  <name>fs.default.name</name>
-	  <value>s3://wntest</value>
-  </property>
   <property>
     <name>nkfs.basedir</name>
     <value>/nkfs_base</value>
   </property>
 
   <property>
-    <name>nkfs.baseFSURI</name>
-    <value>hdfs:///</value>
-  </property>
-
-  <property>
-    <name>fs.nkfs.impl</name>
-    <value>cn.ict.magicube.fs.NKFileSystem</value>
+	<name>nkfs.baseFSURI</name>
+	<value>hdfs://ec2-46-137-251-130.ap-southeast-1.compute.amazonaws.com:8020/</value>
   </property>
 
   <property>

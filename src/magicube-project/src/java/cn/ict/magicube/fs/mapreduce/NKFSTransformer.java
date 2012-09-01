@@ -170,7 +170,7 @@ public class NKFSTransformer extends NKFSUtil {
 			e.printStackTrace();
 		} finally {
 			baseFS.delete(_jobInputPath, false);
-			baseFS.delete(_jobOutputDirPath, true);
+			//baseFS.delete(_jobOutputDirPath, true);
 		}
 		
 		LOG.info("job finished: successful=" + Boolean.toString(successful));
