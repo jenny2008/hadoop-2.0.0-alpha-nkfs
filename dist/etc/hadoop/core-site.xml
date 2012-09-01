@@ -17,31 +17,31 @@
 <!-- Put site-specific property overrides in this file. -->
 
 <configuration>
-  <property>
-    <name>fs.default.name</name>
-    <value>hdfs://wn:8020</value>
-    <description>The name of the default file system.  Either the
-      literal string "local" or a host:port for NDFS.
-    </description>
-  </property>
-  <property>
-	  <name>nkfs.basedir</name>
-	  <value>/nkfs_base</value>
-  </property>
-  <property>
-	  <name>nkfs.baseFSURI</name>
-	  <value>hdfs://wn:8020/</value>
-  </property>
 
-  <property>
-	  <name>nkfs.parity.k</name>
-	  <value>3</value>
-  </property>
+	<property>
+		<name>fs.default.name</name>
+		<value>hdfs://ec2-46-137-251-130.ap-southeast-1.compute.amazonaws.com:8020</value>
+	</property>
 
-  <property>
-	  <name>nkfs.parity.n</name>
-	  <value>4</value>
-  </property>
+	<property>
+		<name>nkfs.basedir</name>
+		<value>/nkfs_base</value>
+	</property>
+
+	<property>
+		<name>nkfs.baseFSURI</name>
+		<value>hdfs://ec2-46-137-251-130.ap-southeast-1.compute.amazonaws.com:8020/</value>
+	</property>
+
+	<property>
+		<name>nkfs.parity.k</name>
+		<value>3</value>
+	</property>
+
+	<property>
+		<name>nkfs.parity.n</name>
+		<value>4</value>
+	</property>
 
 </configuration>
 

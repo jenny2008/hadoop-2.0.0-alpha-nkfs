@@ -1,21 +1,8 @@
 <configuration>
-<property>
+	
+	<property>
+		<name>mapreduce.framework.name</name>
+		<value>yarn</value>
+	</property>
 
-<name>mapred.system.dir</name>
-
-<value>file:/tmp/mapred/system</value>
-
-<final>true</final>
-
-</property>
-
-<property>
-
-<name>mapred.local.dir</name>
-
-<value>file:/tmp/mapred/local</value>
-
-<final>true</final>
-
-</property>
 </configuration>
