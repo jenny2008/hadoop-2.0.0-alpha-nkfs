@@ -29,7 +29,7 @@
 
 	<property>
 		<name>fs.default.name</name>
-		<value>hdfs://ec2-23-21-218-34.compute-1.amazonaws.com:8020</value>
+		<value>hdfs://ec2-174-129-252-177.compute-1.amazonaws.com:8020</value>
 	</property>
 
 	<property>
@@ -39,7 +39,7 @@
 
 	<property>
 		<name>nkfs.baseFSURI</name>
-		<value>hdfs://ec2-23-21-218-34.compute-1.amazonaws.com:8020/</value>
+		<value>hdfs://ec2-174-129-252-177.compute-1.amazonaws.com:8020/</value>
 	</property>
 
 	<property>
