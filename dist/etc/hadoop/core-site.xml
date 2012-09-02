@@ -23,6 +23,11 @@
 	</property>
 
 	<property>
+		<name>fs.AbstractFileSystem.nkfs.impl</name>
+		<value>cn.ict.magicube.fs.NKfs</value>
+	</property>
+
+	<property>
 		<name>fs.default.name</name>
 		<value>hdfs://ec2-23-21-218-34.compute-1.amazonaws.com:8020</value>
 	</property>

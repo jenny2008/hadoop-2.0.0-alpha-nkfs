@@ -6,8 +6,8 @@
 	<classpathentry excluding="org/apache/hadoop/record/compiler/ant/" kind="src" path="src/hadoop-common-project/hadoop-common/src/main/java"/>
 	<classpathentry kind="src" path="src/hadoop-hdfs-project/hadoop-hdfs/src/main/java"/>
 	<classpathentry kind="src" path="src/hadoop-mapreduce-project/hadoop-mapreduce-client/hadoop-mapreduce-client-core/src/main/java"/>
-	<classpathentry kind="src" path="src/hadoop-mapreduce-project/hadoop-mapreduce-client/hadoop-mapreduce-client-jobclient/src/test/java"/>
-	<classpathentry kind="src" path="src/hadoop-hdfs-project/hadoop-hdfs/src/test/java"/>
+	<classpathentry kind="src" path="src/hadoop-mapreduce-project/hadoop-mapreduce-client/hadoop-mapreduce-client-jobclient/src/main/java"/>
+	<classpathentry excluding="org/apache/hadoop/ipc/|org/apache/hadoop/mapreduce/lib/db/TestDataDrivenDBInputFormat.java|org/apache/hadoop/mapreduce/lib/input/TestFileInputFormat.java|org/apache/hadoop/mapreduce/lib/jobcontrol/TestMapReduceJobControlWithMocks.java|org/apache/hadoop/mapreduce/security/TestUmbilicalProtocolWithJobToken.java|org/apache/hadoop/mapred/|org/apache/hadoop/conf/TestNoDefaultsJobConf.java|org/apache/hadoop/mapreduce/|org/apache/hadoop/test/|testjar/" kind="src" path="src/hadoop-mapreduce-project/hadoop-mapreduce-client/hadoop-mapreduce-client-jobclient/src/test/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/sun-jdk-1.6.0.31"/>
 	<classpathentry kind="lib" path="dist/share/hadoop/common/lib/activation-1.1.jar"/>
 	<classpathentry kind="lib" path="dist/share/hadoop/common/lib/asm-3.2.jar"/>
@@ -132,5 +132,8 @@
 	<classpathentry kind="lib" path="dist/share/hadoop/tools/lib/hadoop-rumen-2.0.0-alpha.jar"/>
 	<classpathentry kind="lib" path="dist/share/hadoop/tools/lib/hadoop-streaming-2.0.0-alpha.jar"/>
 	<classpathentry kind="lib" path="dist/share/hadoop/mapreduce/hadoop-mapreduce-client-core-2.0.0-alpha.jar"/>
+	<classpathentry kind="lib" path="dist/share/hadoop/hdfs/hadoop-hdfs-2.0.0-alpha-tests.jar"/>
+	<classpathentry kind="lib" path="dist/share/hadoop/common/hadoop-common-2.0.0-alpha-tests.jar"/>
+	<classpathentry kind="lib" path="dist/share/hadoop/mapreduce/hadoop-mapreduce-test-2.0.0-alpha-sources.jar"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>
