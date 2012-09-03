@@ -52,6 +52,7 @@ public class NKFSShell extends FsShell {
 		factory.registerCommands(ShowLocations.class);
 		factory.registerCommands(DoRaid.class);
 		factory.registerCommands(DoFix.class);
+		factory.registerCommands(FixedLs.class);
 	}
 
 	static {
