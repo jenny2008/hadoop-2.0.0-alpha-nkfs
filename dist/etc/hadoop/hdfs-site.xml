@@ -25,7 +25,7 @@
        
         <property>
                 <name>dfs.datanode.max.xcievers</name>
-                <value>20480</value>
+                <value>204800</value>
         </property>
 
 
