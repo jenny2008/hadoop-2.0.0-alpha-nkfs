@@ -7,13 +7,13 @@
         
 	<property>
                 <name>mapred.child.java.opts</name>
-                <value>-Xmx2048m</value>
+                <value>-Xmx1024m</value>
         </property>
 
 
         <property>
-                <name>mapred.child.ulimit.mb</name>
-                <value>3072</value>
+                <name>mapred.child.ulimit</name>
+                <value>2048m</value>
         </property>
 
 
