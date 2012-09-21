@@ -13,7 +13,7 @@
 
         <property>
                 <name>mapred.child.ulimit</name>
-                <value>2048m</value>
+                <value>2500m</value>
         </property>
 
 
