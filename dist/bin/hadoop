@@ -134,3 +134,5 @@ case $COMMAND in
     ;;
 
 esac
+
+export MALLOC_ARENA_MAX=4
