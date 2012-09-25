@@ -44,12 +44,12 @@
 
 	<property>
 		<name>nkfs.parity.k</name>
-		<value>5</value>
+		<value>12</value>
 	</property>
 
 	<property>
 		<name>nkfs.parity.n</name>
-		<value>10</value>
+		<value>18</value>
 	</property>
 
 </configuration>
