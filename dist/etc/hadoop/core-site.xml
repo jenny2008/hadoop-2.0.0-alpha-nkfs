@@ -49,7 +49,7 @@
 
 	<property>
 		<name>nkfs.parity.n</name>
-		<value>2</value>
+		<value>18</value>
 	</property>
 
 </configuration>
