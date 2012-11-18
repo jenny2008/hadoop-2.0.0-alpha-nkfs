@@ -44,7 +44,7 @@
 
 	<property>
 		<name>nkfs.parity.k</name>
-		<value>1</value>
+		<value>2</value>
 	</property>
 
 	<property>
