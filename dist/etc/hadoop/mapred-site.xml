@@ -7,7 +7,7 @@
         
 	<property>
                 <name>mapred.child.java.opts</name>
-                <value>-Xmx2048m</value>
+                <value>-Xmx1000m</value>
         </property>
         
 	<property>
@@ -15,10 +15,14 @@
                 <value>6</value>
         </property>
 	
+	<property>
+                <name>mapred.tasktracker.reduce.tasks.maximum</name>
+                <value>3</value>
+        </property>
 
         <property>
                 <name>mapred.child.ulimit</name>
-                <value>7000m</value>
+                <value>9000m</value>
         </property>
 
 
