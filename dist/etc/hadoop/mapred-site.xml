@@ -12,13 +12,13 @@
         
 	<property>
                 <name>mapred.tasktracker.map.tasks.maximum</name>
-                <value>7</value>
+                <value>6</value>
         </property>
 	
 
         <property>
                 <name>mapred.child.ulimit</name>
-                <value>8000m</value>
+                <value>7000m</value>
         </property>
 
 
