@@ -15,11 +15,6 @@
                 <value>6</value>
         </property>
 	
-	<property>
-                <name>mapred.tasktracker.reduce.tasks.maximum</name>
-                <value>3</value>
-        </property>
-
         <property>
                 <name>mapred.child.ulimit</name>
                 <value>9000m</value>
