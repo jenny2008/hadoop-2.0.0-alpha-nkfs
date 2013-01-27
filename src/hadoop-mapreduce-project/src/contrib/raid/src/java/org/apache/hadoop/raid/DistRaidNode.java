@@ -82,13 +82,18 @@ public class DistRaidNode extends RaidNode {
    * {@inheritDocs}
    */
   @Override
-  void raidFiles(PolicyInfo info, List<FileStatus> paths) throws IOException {
+  void raidFiles(PolicyInfo info, List<FileStatus> paths, boolean waitForCompletion) throws IOException {
     // We already checked that no job for this policy is running
     // So we can start a new job.
     DistRaid dr = new DistRaid(conf);
     //add paths for distributed raiding
     dr.addRaidPaths(info, paths);
     boolean started = dr.startDistRaid();
+    
+    if (waitForCompletion) {
+    	dr.waitForCompletion(true);
+    	return;
+    }
     if (started) {
       jobMonitor.monitorJob(info.getName(), dr);
     }

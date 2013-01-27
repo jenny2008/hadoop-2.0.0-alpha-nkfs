@@ -171,6 +171,7 @@ public class RaidShell extends Configured implements Tool {
       System.err.println("Usage: java RaidShell");
       System.err.println("           [-showConfig ]");
       System.err.println("           [-help [cmd]]");
+      System.err.println("           [-convert]");
       System.err.println("           [-recover srcPath1 corruptOffset]");
       System.err.println("           [-recoverBlocks path1 path2...]");
       System.err.println("           [-fsck [path]]");
@@ -210,6 +211,8 @@ public class RaidShell extends Configured implements Tool {
         printUsage(cmd);
         return exitCode;
       }
+    } else if ("-convert".equals(cmd)) {
+    	/* ... */
     }
 
     try {
@@ -219,6 +222,9 @@ public class RaidShell extends Configured implements Tool {
       } else if ("-recover".equals(cmd)) {
         initializeRpc(conf, RaidNode.getAddress(conf));
         exitCode = recoverAndPrint(cmd, argv, i);
+      } else if ("-convert".equals(cmd)) {
+          initializeRpc(conf, RaidNode.getAddress(conf));
+          exitCode = convertAndPrint(cmd, argv, i);
       } else if ("-recoverBlocks".equals(cmd)) {
         initializeLocal(conf);
         recoverBlocks(argv, i);
@@ -313,6 +319,12 @@ public class RaidShell extends Configured implements Tool {
     return exitCode;
   }
 
+  public int convertAndPrint(String cmd, String argv[], int startindex)
+  	throws IOException {
+	  raidnode.convertFiles();
+	  return 0;
+  }
+  
   public void recoverBlocks(String[] args, int startIndex)
     throws IOException {
     LOG.debug("Recovering blocks for " + (args.length - startIndex) + " files");

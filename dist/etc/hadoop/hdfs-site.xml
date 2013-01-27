@@ -20,7 +20,7 @@
 
 	<property>
 		<name>dfs.namenode.secondary.http-address</name>
-		<value>ec2-174-129-252-177.compute-1.amazonaws.com:50090</value>
+		<value>localhost:50090</value>
 	</property>
 
 	<property>
@@ -41,6 +41,16 @@
 	<property>
 		<name>fs.s3n.awsSecretAccessKey</name>
 		<value>ExBpWNaUFrxxvEADNl0xUJE2IBTkVkVRKt0WmSzk</value>
+	</property>
+
+	<property>
+		<name>raid.config.file</name>
+		<value>/home/wn/workspace/hadoop-2.0.0/dist/etc/hadoop/raid.xml</value>
+	</property>
+
+	<property>
+		<name>raid.server.address</name>
+		<value>localhost:22345</value>
 	</property>
 
 </configuration>

@@ -55,4 +55,5 @@ public interface RaidProtocol extends VersionedProtocol {
    */
   public String recoverFile(String inputPath, long corruptOffset) throws IOException;
 
+  public void convertFiles() throws IOException;
 }

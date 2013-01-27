@@ -46,7 +46,7 @@ public class LocalRaidNode extends RaidNode {
    * {@inheritDocs}
    */
   @Override
-  void raidFiles(PolicyInfo info, List<FileStatus> paths) throws IOException {
+  void raidFiles(PolicyInfo info, List<FileStatus> paths, boolean waitForCompletion) throws IOException {
     doRaid(conf, info, paths);
   }
 

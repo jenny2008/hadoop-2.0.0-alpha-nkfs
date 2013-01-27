@@ -15,7 +15,8 @@ export HADOOP_HOME
 export HADOOP_COMMON_HOME
 export HADOOP_HDFS_HOME
 
-HADOOP_CLASSPATH=${hadoop_base}/magicube/magicube.jar
+HADOOP_CLASSPATH=${hadoop_base}/magicube/magicube.jar:${hadoop_base}/magicube/raid.jar
+
 export HADOOP_CLASSPATH
 
 YARN_APPLICATION_CLASSPATH=${HADOOP_CLASSPATH}

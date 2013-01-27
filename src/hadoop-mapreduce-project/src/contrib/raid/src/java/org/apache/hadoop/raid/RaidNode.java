@@ -284,10 +284,11 @@ public abstract class RaidNode implements RaidProtocol {
     // read in the configuration
     configMgr = new ConfigManager(conf);
 
-    // create rpc server 
-    this.server = RPC.getServer(this, socAddr.getHostName(), socAddr.getPort(),
-                                handlerCount, false, conf);
-
+    // create rpc server   
+    this.server = RPC.getServer(RaidProtocol.class,
+    		this, socAddr.getHostName(), socAddr.getPort(),
+    		handlerCount, true, conf, null, null);
+    
     // The rpc-server port can be ephemeral... ensure we have the correct info
     this.serverAddress = this.server.getListenerAddress();
     LOG.info("RaidNode up at: " + this.serverAddress);
@@ -396,6 +397,13 @@ public abstract class RaidNode implements RaidProtocol {
      * Should we select more files for a policy.
      */
     private boolean shouldSelectFiles(PolicyInfo info) {
+    	try {
+    		if (Integer.parseInt(info.getProperty("isPassive")) == 1) {
+    			return false;
+    		}
+    	} catch (Exception e) {
+    		
+    	}
       String policyName = info.getName();
       ScanState scanState = scanStateMap.get(policyName);
       int runningJobsCount = getRunningJobsForPolicy(policyName);
@@ -544,7 +552,7 @@ public abstract class RaidNode implements RaidProtocol {
           LOG.info("Triggering Policy Action " + info.getName() +
                    " " + info.getSrcPath());
           try {
-            raidFiles(info, filteredPaths);
+            raidFiles(info, filteredPaths, false);
           } catch (Exception e) {
             LOG.error("Exception while invoking action on policy " + info.getName() +
                      " srcPath " + info.getSrcPath() + 
@@ -578,7 +586,7 @@ public abstract class RaidNode implements RaidProtocol {
   /**
    * raid a list of files, this will be overridden by subclasses of RaidNode
    */
-  abstract void raidFiles(PolicyInfo info, List<FileStatus> paths) 
+  abstract void raidFiles(PolicyInfo info, List<FileStatus> paths, boolean waitforcompletion) 
     throws IOException;
 
   static private Path getOriginalParityFile(Path destPathPrefix, Path srcPath) {
@@ -750,14 +758,17 @@ public abstract class RaidNode implements RaidProtocol {
                       Progressable reporter, boolean doSimulate,
                       int targetRepl, int metaRepl, int stripeLength)
     throws IOException {
+	  System.out.println("Generating parit files: " + destPath.toString());
     Path p = stat.getPath();
     FileSystem srcFs = p.getFileSystem(conf);
 
     // extract block locations from File system
     BlockLocation[] locations = srcFs.getFileBlockLocations(stat, 0, stat.getLen());
+
     
     // if the file has fewer than 2 blocks, then nothing to do
     if (locations.length <= 2) {
+    	System.out.println("File is fewer than 2 blocks");
       return;
     }
 
@@ -1601,6 +1612,73 @@ public abstract class RaidNode implements RaidProtocol {
     return node;
   }
 
+  public void convertFiles() throws IOException {
+	  LOG.info("Convert Files");
+	  
+      ArrayList<PolicyInfo> allPolicies = new ArrayList<PolicyInfo>();
+      for (PolicyList category : configMgr.getAllPolicies()) {
+        for (PolicyInfo info: category.getAll()) {
+          allPolicies.add(info);
+        }
+      }
+	  
+      for (PolicyInfo info: allPolicies) {
+          List<FileStatus> paths = new LinkedList<FileStatus>();
+    	  Path destPrefix = getDestinationPath(info.getErasureCode(), conf);
+          String destpstr = destPrefix.toString();
+    	  try {
+    		  if (Integer.parseInt(info.getProperty("isPassive")) == 1) {
+    			  LOG.info(String.format("add policy %s\n", info.getName()));
+    			  Path srcPath = info.getSrcPath();
+    			  FileSystem fs = srcPath.getFileSystem(conf);    			  
+    		      FileStatus[] gpaths = fs.globStatus(srcPath);
+    		      
+    		      if (gpaths != null) {
+    		        List<FileStatus> selectedPaths = new LinkedList<FileStatus>();
+    		        for (FileStatus onepath: gpaths) {
+    		          String pathstr = onepath.getPath().makeQualified(fs).toString();
+    		          if (!pathstr.endsWith(Path.SEPARATOR)) {
+    		            pathstr += Path.SEPARATOR;
+    		          }
+    		          if (pathstr.startsWith(destpstr) || destpstr.startsWith(pathstr)) {
+    		            LOG.info("Skipping source " + pathstr +
+    		                     " because it conflicts with raid directory " + destpstr);
+    		          } else {
+    		            selectedPaths.add(onepath);
+    		            LOG.info("selectedPath.add(" + onepath.toString() + ")");
+    		          }
+    		        }
+    		        
+    		        DirectoryTraversal dt = new DirectoryTraversal(fs, selectedPaths,
+    		        		conf.getInt("raid.directorytraversal.threads", 4));
+    		        paths.addAll(
+    		        		dt.getFilteredFiles(new DirectoryTraversal.FileFilter() {
+    		        			public boolean check(FileStatus f) throws IOException {
+    		        				return true;
+    		        			}
+    		        		},
+    		        		-1)
+    		        );
+    		       }
+    		  }
+    	  } catch (Exception e) {
+    		  
+    	  }
+    	  if (paths.isEmpty()) {
+    		  LOG.debug("paths is empty");
+    		  continue;
+    	  }
+    	  LOG.info("Begin converting policy " + info.getName());
+    	  for (FileStatus p : paths) {
+    		  LOG.info(p.getPath().toString());
+    	  }
+    	  raidFiles(info, paths, true);
+    	  LOG.info("Finished converting policy " + info.getName());
+      }
+	  LOG.info("Finished convertFiles");
+  }
+  
+  
 
   /**
    */
@@ -1616,7 +1694,4 @@ public abstract class RaidNode implements RaidProtocol {
       System.exit(-1);
     }
   }
-
-  
-
 }

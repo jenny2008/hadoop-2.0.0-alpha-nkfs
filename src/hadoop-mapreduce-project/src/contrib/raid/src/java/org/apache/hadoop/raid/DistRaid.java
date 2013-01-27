@@ -110,7 +110,7 @@ public class DistRaid extends Configured {
      * @param numSplits
      *          Number of splits requested
      */
-    public List<InputSplit> getSplits(JobContext job) throws IOException {
+    public List<InputSplit> getSplits(JobContext job) throws IOException {    	
       Configuration conf = job.getConfiguration();
 
       // We create only one input file. So just get the first file in the first
@@ -270,6 +270,16 @@ public class DistRaid extends Configured {
     }
   }
 
+  public void waitForCompletion(boolean verbose) {
+	  try {
+		  if (runningJob == null)
+			  return;
+		  runningJob.waitForCompletion(verbose);
+	  } catch (Exception e) {
+		  e.printStackTrace();
+	  }
+  }
+
    /** Checks if the map-reduce job has completed.
     *
     * @return true if the job completed, false otherwise.
@@ -281,7 +291,7 @@ public class DistRaid extends Configured {
       if (runningJob.isComplete()) {
          // delete job directory
          Configuration jobConf = runningJob.getConfiguration();
-         final String jobdir = jobConf.get(JOB_DIR_LABEL);
+         final String jobdir = jobConf.get(JOB_DIR_LABEL, "/tmp/raidjob");
          if (jobdir != null) {
            final Path jobpath = new Path(jobdir);
            jobpath.getFileSystem(jobConf).delete(jobpath, true);
@@ -324,13 +334,27 @@ public class DistRaid extends Configured {
    */
   private void createInputFile(Job job) throws IOException {
     Configuration jobConf = job.getConfiguration();
-    Path jobDir = new Path(JOB_DIR_LABEL + getRandomId());
+    String jobDirPathStr = jobConf.get(JOB_DIR_LABEL, "/tmp/raidjob");
+    jobDirPathStr += getRandomId();
+    jobConf.set(JOB_DIR_LABEL, jobDirPathStr);
+    Path jobDir = new Path(jobDirPathStr);
+    
+    
     Path inDir = new Path(jobDir, "in");
     Path outDir = new Path(jobDir, "out");
     FileInputFormat.setInputPaths(job, inDir);
     FileOutputFormat.setOutputPath(job, outDir);
     Path opList = new Path(inDir, NAME);
 
+    FileSystem baseFS = inDir.getFileSystem(jobConf);
+    if (baseFS.exists(inDir)) {
+    	baseFS.delete(inDir, true);
+    }
+    if (baseFS.exists(outDir)) {
+    	baseFS.delete(outDir, true);
+    }
+
+    
     Configuration tmp = new Configuration(jobConf);
     // The control file should have small size blocks. This helps
     // in spreading out the load from mappers that will be spawned.

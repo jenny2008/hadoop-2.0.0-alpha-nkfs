@@ -121,7 +121,10 @@ public class DirectoryTraversal {
 
     while (true) {
       synchronized(filtered) {
-        if (filtered.size() >= limit) break;
+    	  if (limit > 0) {
+    		  if (filtered.size() >= limit)
+    			  break;
+        }
       }
       FilterFileWorkItem work = null;
       try {

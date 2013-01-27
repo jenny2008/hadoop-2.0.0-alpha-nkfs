@@ -8,27 +8,27 @@
 
 	<property>
 		<name>yarn.resourcemanager.address</name>
-		<value>ec2-174-129-252-177.compute-1.amazonaws.com:8032</value>
+		<value>localhost:8032</value>
 	</property>
 
 	<property>
 		<name>yarn.resourcemanager.resource-tracker.address</name>
-		<value>ec2-174-129-252-177.compute-1.amazonaws.com:8031</value>
+		<value>localhost:8031</value>
 	</property>
 
 	<property>
 		<name>yarn.resourcemanager.scheduler.address</name>
-		<value>ec2-174-129-252-177.compute-1.amazonaws.com:8030</value>
+		<value>localhost:8030</value>
 	</property>
 
 	<property>
 		<name>yarn.resourcemanager.webapp.address</name>
-		<value>ec2-174-129-252-177.compute-1.amazonaws.com:8042</value>
+		<value>localhost:8042</value>
 	</property>
 
 	<property>
 		<name>yarn.resourcemanager.admin.address</name>
-		<value>ec2-174-129-252-177.compute-1.amazonaws.com:8033</value>
+		<value>localhost:8033</value>
 	</property>
 
 	<property>
